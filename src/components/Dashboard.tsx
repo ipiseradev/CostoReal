@@ -7,19 +7,24 @@ import PricingCalculator, {
   inputToForm,
   type PricingFormState,
 } from "@/components/PricingCalculator";
-import { calculatePricing, type PricingResult } from "@/lib/pricing";
+import { applyScenario, calculatePricing, type PricingResult, type Scenario } from "@/lib/pricing";
 import type { SavedProduct } from "@/lib/exports";
+import { RUBROS, DEFAULT_CATEGORY } from "@/lib/categories";
 
 const TOKEN_KEY = "costoreal-premium-token";
+const THEME_KEY = "costoreal-theme";
 const ars = new Intl.NumberFormat("es-AR", {
   style: "currency",
   currency: "ARS",
   maximumFractionDigits: 0,
 });
 
-type View = "resumen" | "productos" | "editar";
-type Editor = { product?: SavedProduct };
+type View = "resumen" | "productos" | "editar" | "comparativa" | "metricas" | "guia";
+type Editor = { product?: SavedProduct; category?: string };
 type Toast = { kind: "ok" | "error"; text: string };
+type WithResult = { product: SavedProduct; result: PricingResult | null };
+
+const DEFAULT_SCENARIO: Scenario = { costFactor: 1, unitsFactor: 1, taxPoints: 0 };
 
 function safeCalc(data: SavedProduct["data"]): PricingResult | null {
   try {
@@ -27,6 +32,10 @@ function safeCalc(data: SavedProduct["data"]): PricingResult | null {
   } catch {
     return null;
   }
+}
+
+function truncate(text: string, max: number): string {
+  return text.length > max ? text.slice(0, max - 1).trimEnd() + "…" : text;
 }
 
 function Svg({ children, className }: { children: ReactNode; className?: string }) {
@@ -113,6 +122,38 @@ const IconX = ({ className }: { className?: string }) => (
     <path d="M6 6l12 12M18 6 6 18" />
   </Svg>
 );
+const IconScale = ({ className }: { className?: string }) => (
+  <Svg className={className}>
+    <path d="M12 3v18" />
+    <path d="M8 21h8" />
+    <path d="m6 7 12-2" />
+    <path d="M4 7l-2.5 5a3.2 3.2 0 0 0 5 0L4 7Z" />
+    <path d="m20 5-2.5 5a3.2 3.2 0 0 0 5 0L20 5Z" />
+  </Svg>
+);
+const IconChart = ({ className }: { className?: string }) => (
+  <Svg className={className}>
+    <path d="M3 3v18h18" />
+    <path d="M7 15l3-4 3 2 5-6" />
+  </Svg>
+);
+const IconBook = ({ className }: { className?: string }) => (
+  <Svg className={className}>
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13Z" />
+    <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" />
+  </Svg>
+);
+const IconMoon = ({ className }: { className?: string }) => (
+  <Svg className={className}>
+    <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+  </Svg>
+);
+const IconSun = ({ className }: { className?: string }) => (
+  <Svg className={className}>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4" />
+  </Svg>
+);
 
 function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
@@ -136,12 +177,22 @@ export default function Dashboard() {
   const [sort, setSort] = useState<"recientes" | "precio-desc" | "precio-asc" | "nombre">(
     "recientes"
   );
+  const [catFilter, setCatFilter] = useState("Todos");
   const [loading, setLoading] = useState(true);
   const [unlocking, setUnlocking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportingPdfAll, setExportingPdfAll] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [scenario, setScenario] = useState<Scenario>(DEFAULT_SCENARIO);
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window === "undefined") return "light";
+    const stored = window.localStorage.getItem(THEME_KEY);
+    if (stored === "light" || stored === "dark") return stored;
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
 
   function showToast(kind: Toast["kind"], text: string) {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -154,6 +205,12 @@ export default function Dashboard() {
       if (toastTimer.current) clearTimeout(toastTimer.current);
     };
   }, []);
+
+  function toggleTheme() {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    window.localStorage.setItem(THEME_KEY, next);
+  }
 
   async function loadProducts(currentToken: string): Promise<boolean> {
     try {
@@ -201,6 +258,24 @@ export default function Dashboard() {
     setToast(null);
   }
 
+  function openNew() {
+    setEditor({ category: "" });
+    setView("editar");
+  }
+
+  function openEdit(p: SavedProduct) {
+    setEditor({ product: p, category: p.category || DEFAULT_CATEGORY });
+    setView("editar");
+  }
+
+  function openComparativa() {
+    setSelected((current) => {
+      if (current.length > 0 || products.length < 2) return current;
+      return [products[0].id, products[1].id];
+    });
+    setView("comparativa");
+  }
+
   async function handleUnlock(e: FormEvent) {
     e.preventDefault();
     setUnlocking(true);
@@ -245,6 +320,7 @@ export default function Dashboard() {
         body: JSON.stringify({
           id: editing?.id,
           name: form.name,
+          category: editor.category?.trim() || DEFAULT_CATEGORY,
           input: formToInput(form),
         }),
       });
@@ -283,6 +359,7 @@ export default function Dashboard() {
         throw new Error(data.error ?? "No se pudo eliminar el producto.");
       }
       setProducts((p) => p.filter((x) => x.id !== product.id));
+      setSelected((s) => s.filter((id) => id !== product.id));
       showToast("ok", "Producto eliminado");
     } catch (err) {
       showToast(
@@ -303,6 +380,7 @@ export default function Dashboard() {
         },
         body: JSON.stringify({
           name: `${product.name} (copia)`,
+          category: product.category || DEFAULT_CATEGORY,
           input: product.data,
         }),
       });
@@ -344,6 +422,30 @@ export default function Dashboard() {
     }
   }
 
+  async function exportPdfAll() {
+    if (!token) return;
+    setExportingPdfAll(true);
+    try {
+      const res = await fetch("/api/export/pdf-all", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "No se pudo generar el PDF.");
+      }
+      download(await res.blob(), "costo-real-productos.pdf");
+      showToast("ok", "PDF generado");
+    } catch (err) {
+      showToast(
+        "error",
+        err instanceof Error ? err.message : "No se pudo generar el PDF."
+      );
+    } finally {
+      setExportingPdfAll(false);
+    }
+  }
+
   async function exportPdf(product: SavedProduct) {
     if (!token) return;
     try {
@@ -370,7 +472,7 @@ export default function Dashboard() {
     }
   }
 
-  const withResults = useMemo(
+  const withResults = useMemo<WithResult[]>(
     () => products.map((p) => ({ product: p, result: safeCalc(p.data) })),
     [products]
   );
@@ -383,23 +485,58 @@ export default function Dashboard() {
         : 0;
     const top = valid.reduce(
       (best, x) => ((x.result?.price ?? 0) > (best?.result?.price ?? 0) ? x : best),
-      undefined as (typeof valid)[number] | undefined
+      undefined as WithResult | undefined
     );
     const avgBreakEven =
       valid.length > 0
         ? valid.reduce((acc, x) => acc + (x.result?.breakEvenUnits ?? 0), 0) / valid.length
         : 0;
-    return { count: products.length, avgPrice, top, avgBreakEven };
+    const revenue = valid.reduce(
+      (acc, x) => acc + (x.result?.price ?? 0) * x.product.data.unitsMonth,
+      0
+    );
+    const margin = valid.reduce(
+      (acc, x) =>
+        acc +
+        ((x.result?.price ?? 0) - (x.result?.totalCostUnit ?? 0)) *
+          x.product.data.unitsMonth,
+      0
+    );
+    const avgMargin =
+      valid.length > 0
+        ? valid.reduce((acc, x) => acc + (x.result?.marginPercent ?? 0), 0) / valid.length
+        : 0;
+    return { count: products.length, avgPrice, top, avgBreakEven, revenue, margin, avgMargin };
   }, [withResults, products.length]);
+
+  const categories = useMemo(() => {
+    const present = Array.from(new Set(products.map((p) => p.category || DEFAULT_CATEGORY)));
+    const ordered = RUBROS.filter((r) => present.includes(r));
+    const rest = present.filter((c) => !(ordered as string[]).includes(c)).sort();
+    return [...ordered, ...rest];
+  }, [products]);
+
+  const catCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const p of products) {
+      const c = p.category || DEFAULT_CATEGORY;
+      m.set(c, (m.get(c) ?? 0) + 1);
+    }
+    return Object.fromEntries(m) as Record<string, number>;
+  }, [products]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = withResults.filter((x) => !q || x.product.name.toLowerCase().includes(q));
+    let list = withResults.filter(
+      (x) =>
+        (!q || x.product.name.toLowerCase().includes(q)) &&
+        (catFilter === "Todos" || (x.product.category || DEFAULT_CATEGORY) === catFilter)
+    );
     if (sort === "precio-desc") list = [...list].sort((a, b) => (b.result?.price ?? 0) - (a.result?.price ?? 0));
     if (sort === "precio-asc") list = [...list].sort((a, b) => (a.result?.price ?? 0) - (b.result?.price ?? 0));
     if (sort === "nombre") list = [...list].sort((a, b) => a.product.name.localeCompare(b.product.name, "es"));
     return list;
-  }, [withResults, query, sort]);
+  }, [withResults, query, sort, catFilter]);
 
   const recent = useMemo(
     () =>
@@ -407,6 +544,32 @@ export default function Dashboard() {
         .sort((a, b) => b.product.updatedAt.localeCompare(a.product.updatedAt))
         .slice(0, 3),
     [withResults]
+  );
+
+  const selectedItems = useMemo(
+    () => withResults.filter((x) => selected.includes(x.product.id)),
+    [withResults, selected]
+  );
+
+  const comparativa = useMemo(
+    () =>
+      selectedItems.map(({ product }) => {
+        const base = safeCalc(product.data);
+        const sc = safeCalc(applyScenario(product.data, scenario));
+        return { product, base, sc };
+      }),
+    [selectedItems, scenario]
+  );
+
+  const scTotalRevenue = useMemo(
+    () =>
+      comparativa.reduce(
+        (acc, x) =>
+          acc +
+          (x.sc?.price ?? 0) * (x.product.data.unitsMonth * scenario.unitsFactor),
+        0
+      ),
+    [comparativa, scenario]
   );
 
   function download(blob: Blob, filename: string) {
@@ -430,7 +593,10 @@ export default function Dashboard() {
 
   if (!token) {
     return (
-      <div className="flex min-h-screen items-center bg-zinc-50 px-5 py-16">
+      <div
+        data-theme={theme}
+        className="flex min-h-screen items-center bg-zinc-50 px-5 py-16"
+      >
         <div className="mx-auto grid w-full max-w-3xl gap-10 lg:grid-cols-[1fr_1fr] lg:items-center">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-xs font-semibold text-zinc-600 shadow-sm">
@@ -447,8 +613,9 @@ export default function Dashboard() {
             <ul className="mt-6 flex flex-col gap-3 text-sm text-zinc-600">
               {[
                 "Productos ilimitados en la nube",
+                "Comparativa y simulador de escenarios",
                 "Exportación a Excel y PDF",
-                "Edición y duplicado al instante",
+                "Métricas y guía de costeo",
               ].map((f) => (
                 <li key={f} className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[10px] font-bold text-white">
@@ -461,9 +628,19 @@ export default function Dashboard() {
           </div>
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-[0_25px_60px_-30px_rgba(0,0,0,0.35)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">
-              Iniciar sesión
-            </p>
+            <div className="flex items-start justify-between gap-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">
+                Iniciar sesión
+              </p>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                title={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+                className="rounded-lg border border-zinc-200 p-2 text-zinc-500 transition hover:border-zinc-300 hover:text-zinc-900"
+              >
+                {theme === "dark" ? <IconSun className="h-4 w-4" /> : <IconMoon className="h-4 w-4" />}
+              </button>
+            </div>
             <form onSubmit={handleUnlock} className="mt-5 flex flex-col gap-3">
               <label className="flex flex-col gap-1.5">
                 <span className="text-sm font-medium text-zinc-700">
@@ -503,12 +680,26 @@ export default function Dashboard() {
       ? "Resumen"
       : view === "productos"
         ? "Productos"
-        : editor.product
-          ? "Editar producto"
-          : "Nuevo producto";
+        : view === "comparativa"
+          ? "Comparativa y simulador"
+          : view === "metricas"
+            ? "Métricas"
+            : view === "guia"
+              ? "Guía de costeo"
+              : editor.product
+                ? "Editar producto"
+                : "Nuevo producto";
+
+  const navItems: Array<{ view: View; label: string; icon: ReactNode; badge?: string }> = [
+    { view: "resumen", label: "Resumen", icon: <IconHome /> },
+    { view: "productos", label: "Productos", icon: <IconBox />, badge: products.length > 0 ? String(products.length) : undefined },
+    { view: "comparativa", label: "Comparativa", icon: <IconScale /> },
+    { view: "metricas", label: "Métricas", icon: <IconChart /> },
+    { view: "guia", label: "Guía de costeo", icon: <IconBook /> },
+  ];
 
   return (
-    <div className="flex min-h-screen w-full bg-zinc-50">
+    <div data-theme={theme} className="flex min-h-screen w-full bg-zinc-50">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950 lg:flex">
         <div className="px-6 pb-6 pt-7">
           <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-white">
@@ -523,19 +714,18 @@ export default function Dashboard() {
         </div>
 
         <nav className="flex flex-col gap-1 px-3">
-          <NavItem
-            active={view === "resumen"}
-            onClick={() => setView("resumen")}
-            icon={<IconHome />}
-            label="Resumen"
-          />
-          <NavItem
-            active={view === "productos"}
-            onClick={() => setView("productos")}
-            icon={<IconBox />}
-            label="Productos"
-            badge={products.length > 0 ? String(products.length) : undefined}
-          />
+          {navItems.map((item) => (
+            <NavItem
+              key={item.view}
+              active={view === item.view}
+              onClick={() =>
+                item.view === "comparativa" ? openComparativa() : setView(item.view)
+              }
+              icon={item.icon}
+              label={item.label}
+              badge={item.badge}
+            />
+          ))}
         </nav>
 
         <div className="mt-auto space-y-4 border-t border-zinc-800 p-5">
@@ -548,18 +738,37 @@ export default function Dashboard() {
             <IconDownload className="h-4 w-4" />
             {exporting ? "Generando…" : "Exportar Excel"}
           </button>
+          <button
+            type="button"
+            onClick={exportPdfAll}
+            disabled={exportingPdfAll || products.length === 0}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-semibold text-zinc-200 transition enabled:hover:border-zinc-500 enabled:hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <IconFile className="h-4 w-4" />
+            {exportingPdfAll ? "Generando…" : "PDF de todos"}
+          </button>
           <div className="flex items-center justify-between gap-2">
             <p className="min-w-0 truncate text-xs text-zinc-400">
               {email}
             </p>
-            <button
-              type="button"
-              onClick={clearSession}
-              title="Cerrar sesión"
-              className="shrink-0 text-zinc-400 transition hover:text-white"
-            >
-              <IconLogout className="h-4 w-4" />
-            </button>
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                title={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+                className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
+              >
+                {theme === "dark" ? <IconSun className="h-4 w-4" /> : <IconMoon className="h-4 w-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={clearSession}
+                title="Cerrar sesión"
+                className="shrink-0 p-1.5 text-zinc-400 transition hover:text-white"
+              >
+                <IconLogout className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>
@@ -581,10 +790,7 @@ export default function Dashboard() {
             {view !== "editar" ? (
               <button
                 type="button"
-                onClick={() => {
-                  setEditor({});
-                  setView("editar");
-                }}
+                onClick={openNew}
                 className="flex shrink-0 items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-zinc-700 hover:shadow-md"
               >
                 <IconPlus className="h-4 w-4" />
@@ -602,13 +808,21 @@ export default function Dashboard() {
             )}
           </div>
           {view !== "editar" && (
-            <div className="flex gap-1 border-t border-zinc-100 px-3 py-2 lg:hidden">
-              <MobileTab active={view === "resumen"} onClick={() => setView("resumen")}>
-                Resumen
-              </MobileTab>
-              <MobileTab active={view === "productos"} onClick={() => setView("productos")}>
-                Productos
-              </MobileTab>
+            <div className="flex gap-1 overflow-x-auto border-t border-zinc-100 px-3 py-2 lg:hidden">
+              {navItems.map((item) => (
+                <button
+                  key={item.view}
+                  type="button"
+                  onClick={() =>
+                    item.view === "comparativa" ? openComparativa() : setView(item.view)
+                  }
+                  className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                    view === item.view ? "bg-zinc-900 text-white" : "text-zinc-500"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
             </div>
           )}
         </header>
@@ -619,15 +833,13 @@ export default function Dashboard() {
               stats={stats}
               recent={recent}
               ars={ars}
-              onNew={() => {
-                setEditor({});
-                setView("editar");
-              }}
+              onNew={openNew}
               onSeeAll={() => setView("productos")}
-              onEdit={(p) => {
-                setEditor({ product: p });
-                setView("editar");
-              }}
+              onComparar={openComparativa}
+              onMetricas={() => setView("metricas")}
+              onGuia={() => setView("guia")}
+              onEdit={openEdit}
+              onDuplicate={duplicateProduct}
               onExport={exportExcel}
               exporting={exporting}
             />
@@ -636,24 +848,43 @@ export default function Dashboard() {
             <ProductosView
               items={filtered}
               total={products.length}
+              categories={categories}
+              catCounts={catCounts}
+              catFilter={catFilter}
+              onCatFilter={setCatFilter}
               query={query}
               onQuery={setQuery}
               sort={sort}
               onSort={setSort}
               ars={ars}
-              onEdit={(p) => {
-                setEditor({ product: p });
-                setView("editar");
-              }}
+              onEdit={openEdit}
               onDelete={deleteProduct}
               onDuplicate={duplicateProduct}
               onPdf={exportPdf}
-              onNew={() => {
-                setEditor({});
-                setView("editar");
-              }}
+              onNew={openNew}
             />
           )}
+          {view === "comparativa" && (
+            <ComparativaView
+              items={withResults}
+              selected={selected}
+              onToggle={(id) =>
+                setSelected((s) =>
+                  s.includes(id) ? s.filter((x) => x !== id) : [...s, id]
+                )
+              }
+              comparativa={comparativa}
+              scenario={scenario}
+              onScenario={setScenario}
+              scTotalRevenue={scTotalRevenue}
+              ars={ars}
+              onNew={openNew}
+            />
+          )}
+          {view === "metricas" && (
+            <MetricasView items={withResults} stats={stats} ars={ars} onNew={openNew} />
+          )}
+          {view === "guia" && <GuiaView />}
           {view === "editar" && (
             <div className="mx-auto w-full max-w-6xl">
               <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_30px_60px_-30px_rgba(0,0,0,0.25)]">
@@ -664,6 +895,8 @@ export default function Dashboard() {
                   onSave={saveProduct}
                   saving={saving}
                   saveLabel={editor.product ? "Guardar cambios" : "Guardar producto"}
+                  category={editor.category ?? ""}
+                  onCategoryChange={(c) => setEditor((e) => ({ ...e, category: c }))}
                 />
               </div>
             </div>
@@ -724,25 +957,11 @@ function NavItem({
   );
 }
 
-function MobileTab({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
+function CategoryChip({ value }: { value: string }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition ${
-        active ? "bg-zinc-900 text-white" : "text-zinc-500"
-      }`}
-    >
-      {children}
-    </button>
+    <span className="inline-flex items-center rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-0.5 text-[11px] font-semibold text-zinc-600">
+      {value}
+    </span>
   );
 }
 
@@ -752,21 +971,32 @@ function ResumenView({
   ars,
   onNew,
   onSeeAll,
+  onComparar,
+  onMetricas,
+  onGuia,
   onEdit,
+  onDuplicate,
   onExport,
   exporting,
 }: {
   stats: {
     count: number;
     avgPrice: number;
-    top: { product: SavedProduct; result: PricingResult | null } | undefined;
+    top: WithResult | undefined;
     avgBreakEven: number;
+    revenue: number;
+    margin: number;
+    avgMargin: number;
   };
-  recent: { product: SavedProduct; result: PricingResult | null }[];
+  recent: WithResult[];
   ars: Intl.NumberFormat;
   onNew: () => void;
   onSeeAll: () => void;
+  onComparar: () => void;
+  onMetricas: () => void;
+  onGuia: () => void;
   onEdit: (p: SavedProduct) => void;
+  onDuplicate: (p: SavedProduct) => void;
   onExport: () => void;
   exporting: boolean;
 }) {
@@ -775,16 +1005,8 @@ function ResumenView({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Productos guardados" value={String(stats.count)} hint="en la nube" />
         <StatCard label="Precio promedio" value={stats.count > 0 ? ars.format(stats.avgPrice) : "—"} hint="de venta sugerido" />
-        <StatCard
-          label="Precio más alto"
-          value={stats.top ? ars.format(stats.top.result?.price ?? 0) : "—"}
-          hint={stats.top ? stats.top.product.name : "todavía no cargaste productos"}
-        />
-        <StatCard
-          label="Punto de equilibrio"
-          value={stats.count > 0 ? `${stats.avgBreakEven.toFixed(1)} u/mes` : "—"}
-          hint="promedio para no perder plata"
-        />
+        <StatCard label="Ingreso proyectado" value={stats.count > 0 ? ars.format(stats.revenue) : "—"} hint="por mes, según tus unidades" />
+        <StatCard label="Margen bruto / mes" value={stats.count > 0 ? ars.format(stats.margin) : "—"} hint={stats.count > 0 ? `promedio ${stats.avgMargin.toFixed(1)}%` : "todavía no cargaste productos"} />
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -828,16 +1050,27 @@ function ResumenView({
                   className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-semibold tracking-tight">{product.name}</p>
+                    <p className="flex items-center gap-2">
+                      <span className="truncate font-semibold tracking-tight">{product.name}</span>
+                      <CategoryChip value={product.category || DEFAULT_CATEGORY} />
+                    </p>
                     <p className="mt-0.5 text-sm text-zinc-500">
                       {result ? `Margen ${result.marginPercent.toFixed(1)}%` : "—"} · Actualizado{" "}
                       {new Date(product.updatedAt).toLocaleDateString("es-AR")}
                     </p>
                   </div>
-                  <div className="flex shrink-0 items-center gap-3">
+                  <div className="flex shrink-0 items-center gap-2">
                     <span className="font-display text-lg font-semibold">
                       {ars.format(product.price)}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => onDuplicate(product)}
+                      title="Duplicar"
+                      className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-zinc-500 transition hover:border-zinc-900 hover:text-zinc-900"
+                    >
+                      <IconCopy className="h-3.5 w-3.5" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => onEdit(product)}
@@ -852,47 +1085,89 @@ function ResumenView({
           )}
         </section>
 
-        <aside className="flex flex-col gap-4">
-          <button
-            type="button"
+        <aside className="flex flex-col gap-3">
+          <QuickAction
+            icon={<IconPlus />}
+            title="Nuevo producto"
+            subtitle="Calculá y guardá en segundos"
             onClick={onNew}
-            className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 text-left transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-lg"
-          >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-zinc-900 text-white">
-              <IconPlus />
-            </span>
-            <span>
-              <span className="block font-semibold">Nuevo producto</span>
-              <span className="mt-0.5 block text-sm text-zinc-500">
-                Calculá y guardá en segundos
-              </span>
-            </span>
-          </button>
-          <button
-            type="button"
+            dark
+          />
+          <QuickAction
+            icon={<IconScale />}
+            title="Comparativa"
+            subtitle="Simulá escenarios lado a lado"
+            onClick={onComparar}
+          />
+          <QuickAction
+            icon={<IconChart />}
+            title="Métricas"
+            subtitle="Ingresos, márgenes y gráficos"
+            onClick={onMetricas}
+          />
+          <QuickAction
+            icon={<IconBook />}
+            title="Guía de costeo"
+            subtitle="Estrategia para fijar precios"
+            onClick={onGuia}
+          />
+          <QuickAction
+            icon={<IconDownload />}
+            title="Exportar Excel"
+            subtitle={exporting ? "Generando…" : "Toda tu planilla editable"}
             onClick={onExport}
             disabled={exporting || stats.count === 0}
-            className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 text-left transition enabled:hover:-translate-y-0.5 enabled:hover:border-zinc-300 enabled:hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-900">
-              <IconDownload />
-            </span>
-            <span>
-              <span className="block font-semibold">Exportar Excel</span>
-              <span className="mt-0.5 block text-sm text-zinc-500">
-                {exporting ? "Generando…" : "Toda tu planilla editable"}
-              </span>
-            </span>
-          </button>
+          />
         </aside>
       </div>
     </div>
   );
 }
 
+function QuickAction({
+  icon,
+  title,
+  subtitle,
+  onClick,
+  disabled,
+  dark,
+}: {
+  icon: ReactNode;
+  title: string;
+  subtitle: string;
+  onClick: () => void;
+  disabled?: boolean;
+  dark?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 text-left transition enabled:hover:-translate-y-0.5 enabled:hover:border-zinc-300 enabled:hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <span
+        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+          dark ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-900"
+        }`}
+      >
+        {icon}
+      </span>
+      <span>
+        <span className="block font-semibold">{title}</span>
+        <span className="mt-0.5 block text-sm text-zinc-500">{subtitle}</span>
+      </span>
+    </button>
+  );
+}
+
 function ProductosView({
   items,
   total,
+  categories,
+  catCounts,
+  catFilter,
+  onCatFilter,
   query,
   onQuery,
   sort,
@@ -904,8 +1179,12 @@ function ProductosView({
   onPdf,
   onNew,
 }: {
-  items: { product: SavedProduct; result: PricingResult | null }[];
+  items: WithResult[];
   total: number;
+  categories: string[];
+  catCounts: Record<string, number>;
+  catFilter: string;
+  onCatFilter: (c: string) => void;
   query: string;
   onQuery: (q: string) => void;
   sort: "recientes" | "precio-desc" | "precio-asc" | "nombre";
@@ -950,6 +1229,26 @@ function ProductosView({
         </label>
       </div>
 
+      {categories.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <CatChip
+            label="Todos"
+            count={total}
+            active={catFilter === "Todos"}
+            onClick={() => onCatFilter("Todos")}
+          />
+          {categories.map((c) => (
+            <CatChip
+              key={c}
+              label={c}
+              active={catFilter === c}
+              onClick={() => onCatFilter(c)}
+              count={catCounts[c] ?? 0}
+            />
+          ))}
+        </div>
+      )}
+
       <p className="mt-6 text-sm text-zinc-500">
         {total > 0 ? (
           <>
@@ -979,14 +1278,17 @@ function ProductosView({
       ) : items.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center">
           <p className="text-sm font-medium text-zinc-700">
-            No hay productos que coincidan con «{query}»
+            No hay productos que coincidan con el filtro
           </p>
           <button
             type="button"
-            onClick={() => onQuery("")}
+            onClick={() => {
+              onQuery("");
+              onCatFilter("Todos");
+            }}
             className="mt-4 text-sm font-semibold text-zinc-900 hover:underline"
           >
-            Limpiar búsqueda
+            Limpiar filtros
           </button>
         </div>
       ) : (
@@ -1002,6 +1304,7 @@ function ProductosView({
                     <IconBox className="h-4 w-4" />
                   </span>
                   <h3 className="truncate font-semibold tracking-tight">{product.name}</h3>
+                  <CategoryChip value={product.category || DEFAULT_CATEGORY} />
                 </div>
                 <p className="mt-1.5 pl-12 text-sm text-zinc-500">
                   {result
@@ -1058,6 +1361,575 @@ function ProductosView({
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function CatChip({
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  label: string;
+  count?: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+        active
+          ? "border-zinc-900 bg-zinc-900 text-white"
+          : "border-zinc-300 bg-white text-zinc-600 hover:border-zinc-900 hover:text-zinc-900"
+      }`}
+    >
+      {label}
+      {typeof count === "number" && (
+        <span className="ml-1.5 opacity-60">{count}</span>
+      )}
+    </button>
+  );
+}
+
+function ScenarioSlider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  display,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  display: string;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-2">
+      <span className="flex items-center justify-between text-sm">
+        <span className="font-medium text-zinc-700">{label}</span>
+        <span className="font-semibold text-zinc-900">{display}</span>
+      </span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="accent-zinc-900"
+      />
+    </label>
+  );
+}
+
+function ComparativaView({
+  items,
+  selected,
+  onToggle,
+  comparativa,
+  scenario,
+  onScenario,
+  scTotalRevenue,
+  ars,
+  onNew,
+}: {
+  items: WithResult[];
+  selected: string[];
+  onToggle: (id: string) => void;
+  comparativa: { product: SavedProduct; base: PricingResult | null; sc: PricingResult | null }[];
+  scenario: Scenario;
+  onScenario: (s: Scenario) => void;
+  scTotalRevenue: number;
+  ars: Intl.NumberFormat;
+  onNew: () => void;
+}) {
+  const isSimulating =
+    scenario.costFactor !== 1 || scenario.unitsFactor !== 1 || scenario.taxPoints !== 0;
+
+  if (items.length < 2) {
+    return (
+      <div className="mx-auto w-full max-w-6xl">
+        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400">
+            <IconScale className="h-7 w-7" />
+          </span>
+          <p className="mt-5 text-sm font-medium text-zinc-700">
+            Necesitás al menos dos productos para comparar
+          </p>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-zinc-500">
+            Guardá un par de cálculos y vas a poder compararlos lado a lado y
+            simular escenarios.
+          </p>
+          <button
+            type="button"
+            onClick={onNew}
+            className="mt-6 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-zinc-700"
+          >
+            + Crear mi primer producto
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-6xl">
+      <section className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+          Elegí productos para comparar
+        </h2>
+        <p className="mt-1 text-sm text-zinc-500">
+          Marcá al menos dos. Seleccionados: {selected.length}
+        </p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map(({ product, result }) => {
+            const isSel = selected.includes(product.id);
+            return (
+              <button
+                key={product.id}
+                type="button"
+                onClick={() => onToggle(product.id)}
+                className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${
+                  isSel
+                    ? "border-zinc-900 bg-zinc-900 text-white"
+                    : "border-zinc-200 bg-white hover:border-zinc-300"
+                }`}
+              >
+                <span
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
+                    isSel ? "border-white/50" : "border-zinc-300"
+                  }`}
+                >
+                  {isSel && <IconCheck className="h-3 w-3" />}
+                </span>
+                <span className="min-w-0">
+                  <span className={`block truncate text-sm font-semibold ${isSel ? "text-white" : "text-zinc-900"}`}>
+                    {product.name}
+                  </span>
+                  <span className={`block text-xs ${isSel ? "text-zinc-300" : "text-zinc-500"}`}>
+                    {ars.format(result?.price ?? product.price)}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+            Simulador de escenarios
+          </h2>
+          {isSimulating && (
+            <button
+              type="button"
+              onClick={() => onScenario(DEFAULT_SCENARIO)}
+              className="text-xs font-semibold text-zinc-900 hover:underline"
+            >
+              Restablecer
+            </button>
+          )}
+        </div>
+        <div className="mt-5 grid gap-5 sm:grid-cols-3">
+          <ScenarioSlider
+            label="Costo de insumos"
+            value={scenario.costFactor}
+            min={0.5}
+            max={2}
+            step={0.05}
+            display={`× ${scenario.costFactor.toFixed(2)}`}
+            onChange={(v) => onScenario({ ...scenario, costFactor: v })}
+          />
+          <ScenarioSlider
+            label="Unidades vendidas"
+            value={scenario.unitsFactor}
+            min={0.5}
+            max={3}
+            step={0.1}
+            display={`× ${scenario.unitsFactor.toFixed(1)}`}
+            onChange={(v) => onScenario({ ...scenario, unitsFactor: v })}
+          />
+          <ScenarioSlider
+            label="Impuestos extra"
+            value={scenario.taxPoints}
+            min={0}
+            max={30}
+            step={1}
+            display={`+${scenario.taxPoints} pts`}
+            onChange={(v) => onScenario({ ...scenario, taxPoints: v })}
+          />
+        </div>
+        {isSimulating && (
+          <p className="mt-5 rounded-xl bg-zinc-100 p-4 text-sm text-zinc-700">
+            <strong>Ingreso mensual proyectado en este escenario:</strong>{" "}
+            <span className="font-display text-lg font-semibold">{ars.format(scTotalRevenue)}</span>
+          </p>
+        )}
+      </section>
+
+      {comparativa.length < 2 ? (
+        <div className="mt-6 rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center">
+          <p className="text-sm font-medium text-zinc-700">
+            Elegí al menos dos productos para ver la comparación
+          </p>
+        </div>
+      ) : (
+        <section className="mt-6 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-zinc-100 bg-zinc-50 text-[11px] uppercase tracking-[0.15em] text-zinc-400">
+                  <th className="px-5 py-4 font-semibold">Producto</th>
+                  <th className="px-3 py-4 text-right font-semibold">Precio actual</th>
+                  <th className="px-3 py-4 text-right font-semibold">Precio escenario</th>
+                  <th className="px-3 py-4 text-right font-semibold">Margen actual</th>
+                  <th className="px-3 py-4 text-right font-semibold">Margen escenario</th>
+                  <th className="px-3 py-4 text-right font-semibold">Eq. actual</th>
+                  <th className="px-3 py-4 text-right font-semibold">Eq. escenario</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {comparativa.map(({ product, base, sc }) => (
+                  <tr key={product.id}>
+                    <td className="px-5 py-4 font-semibold">
+                      <span className="block truncate">{product.name}</span>
+                      <span className="text-xs font-normal text-zinc-500">
+                        {product.category || DEFAULT_CATEGORY}
+                      </span>
+                    </td>
+                    <td className="px-3 py-4 text-right font-display font-semibold">
+                      {base ? ars.format(base.price) : "—"}
+                    </td>
+                    <td className="px-3 py-4 text-right">
+                      {sc ? (
+                        <span className="font-display font-semibold text-zinc-900">
+                          {ars.format(sc.price)}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-3 py-4 text-right">
+                      {base ? `${base.marginPercent.toFixed(1)}%` : "—"}
+                    </td>
+                    <td className="px-3 py-4 text-right">
+                      {sc ? `${sc.marginPercent.toFixed(1)}%` : "—"}
+                    </td>
+                    <td className="px-3 py-4 text-right">
+                      {base ? `${base.breakEvenUnits.toFixed(0)} u` : "—"}
+                    </td>
+                    <td className="px-3 py-4 text-right">
+                      {sc ? `${sc.breakEvenUnits.toFixed(0)} u` : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+function RevenueChart({ items, ars }: { items: WithResult[]; ars: Intl.NumberFormat }) {
+  const rows = items
+    .map(({ product, result }) => ({
+      id: product.id,
+      name: product.name,
+      revenue: (result?.price ?? 0) * product.data.unitsMonth,
+    }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 8);
+  if (rows.length === 0) return null;
+  const max = Math.max(...rows.map((r) => r.revenue), 1);
+  const barMax = 320;
+  const W = 560;
+  const H = rows.length * 46 + 12;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Ingreso proyectado por producto">
+      {rows.map((r, i) => {
+        const y = i * 46 + 6;
+        const bw = Math.max(3, (r.revenue / max) * barMax);
+        return (
+          <g key={r.id}>
+            <text x={0} y={y + 13} fontSize={11} className="fill-zinc-500">
+              {truncate(r.name, 26)}
+            </text>
+            <rect x={0} y={y + 20} width={bw} height={13} rx={3} className="fill-zinc-900" />
+            <text x={bw + 8} y={y + 31} fontSize={11} fontWeight={600} className="fill-zinc-900">
+              {ars.format(r.revenue)}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function MetricasView({
+  items,
+  stats,
+  ars,
+  onNew,
+}: {
+  items: WithResult[];
+  stats: {
+    count: number;
+    avgPrice: number;
+    avgBreakEven: number;
+    revenue: number;
+    margin: number;
+    avgMargin: number;
+  };
+  ars: Intl.NumberFormat;
+  onNew: () => void;
+}) {
+  if (items.length === 0) {
+    return (
+      <div className="mx-auto w-full max-w-6xl">
+        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400">
+            <IconChart className="h-7 w-7" />
+          </span>
+          <p className="mt-5 text-sm font-medium text-zinc-700">
+            Guardá productos para ver tus métricas
+          </p>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-zinc-500">
+            Acá vas a ver ingresos proyectados, márgenes y puntos de equilibrio.
+          </p>
+          <button
+            type="button"
+            onClick={onNew}
+            className="mt-6 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-zinc-700"
+          >
+            + Crear mi primer producto
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const valid = items.filter((x) => x.result);
+  const costosTotales = valid.reduce((acc, x) => acc + x.product.data.fixedCosts, 0);
+
+  return (
+    <div className="mx-auto w-full max-w-6xl">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Ingreso proyectado" value={ars.format(stats.revenue)} hint="por mes, a tus unidades actuales" />
+        <StatCard label="Margen bruto / mes" value={ars.format(stats.margin)} hint={`promedio ${stats.avgMargin.toFixed(1)}% sobre el precio`} />
+        <StatCard label="Costos fijos / mes" value={ars.format(costosTotales)} hint="suma de todos tus productos" />
+        <StatCard label="Precio promedio" value={ars.format(stats.avgPrice)} hint={`equilibrio promedio ${stats.avgBreakEven.toFixed(1)} u/mes`} />
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
+        <section className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+            Ingreso mensual por producto
+          </h2>
+          <p className="mt-1 text-sm text-zinc-500">
+            Precio sugerido × unidades que planificaste vender al mes.
+          </p>
+          <div className="mt-6">
+            <RevenueChart items={items} ars={ars} />
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-4">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+              Top por precio
+            </h2>
+            <ul className="mt-4 flex flex-col gap-3">
+              {valid
+                .sort((a, b) => (b.result?.price ?? 0) - (a.result?.price ?? 0))
+                .slice(0, 5)
+                .map(({ product, result }) => (
+                  <li key={product.id} className="flex items-center justify-between gap-3">
+                    <span className="min-w-0 truncate text-sm text-zinc-600">{product.name}</span>
+                    <span className="font-display shrink-0 text-sm font-semibold">
+                      {ars.format(result?.price ?? product.price)}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+              Margen por producto
+            </h2>
+            <ul className="mt-4 flex flex-col gap-3">
+              {valid
+                .sort((a, b) => (b.result?.marginPercent ?? 0) - (a.result?.marginPercent ?? 0))
+                .slice(0, 5)
+                .map(({ product, result }) => (
+                  <li key={product.id} className="flex items-center justify-between gap-3">
+                    <span className="min-w-0 truncate text-sm text-zinc-600">{product.name}</span>
+                    <span className="shrink-0 text-sm font-semibold text-zinc-900">
+                      {result ? `${result.marginPercent.toFixed(1)}%` : "—"}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function GuiaView() {
+  const rubros: Array<[string, string]> = [
+    ["Gastronomía", "55 – 70% sobre el costo de insumos"],
+    ["Cosmética y belleza", "60 – 80%"],
+    ["Indumentaria", "50 – 70%"],
+    ["Artesanías", "50 – 70%"],
+    ["Velas y aromas", "55 – 70%"],
+    ["Servicios", "70% o más (tu tiempo es el costo)"],
+    ["Dulces y repostería", "60 – 75%"],
+    ["Cafeterías", "60 – 75%"],
+  ];
+
+  return (
+    <div className="mx-auto w-full max-w-4xl">
+      <section className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-8">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+          La regla de oro
+        </h2>
+        <p className="mt-4 text-lg leading-relaxed">
+          El precio tiene que cubrir <strong>todos tus costos</strong> (los
+          variables de cada unidad más una parte de los fijos) y dejarte una
+          ganancia. Si el margen real que calcula CostoReal queda muy bajo,
+          estás financiando tu negocio con tu propio bolsillo.
+        </p>
+        <div className="mt-6 rounded-xl bg-zinc-100 p-5 text-sm text-zinc-700">
+          <p className="font-semibold text-zinc-900">La fórmula</p>
+          <p className="mt-1">
+            Precio = Costo unitario total ÷ (1 − margen deseado)
+          </p>
+          <p className="mt-1">
+            Ejemplo: costo de $5.000 y margen del 40% → $5.000 ÷ 0,6 ={" "}
+            <strong>$8.333</strong>.
+          </p>
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 sm:p-8">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+          Márgenes de referencia por rubro
+        </h2>
+        <p className="mt-2 text-sm text-zinc-500">
+          Porcentajes de margen sobre el precio de venta que suelen funcionar en
+          Argentina para productos hechos a mano o de baja escala.
+        </p>
+        <div className="mt-5 grid gap-2 sm:grid-cols-2">
+          {rubros.map(([rubro, margen]) => (
+            <div
+              key={rubro}
+              className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 px-4 py-3"
+            >
+              <span className="text-sm font-semibold">{rubro}</span>
+              <span className="text-sm text-zinc-500">{margen}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+            Bajar el punto de equilibrio
+          </h2>
+          <ul className="mt-4 flex flex-col gap-3 text-sm text-zinc-700">
+            {[
+              "Reducí costos fijos (alquiler, suscripciones, gastos hormiga).",
+              "Subí el ticket promedio con versiones más grandes o kits.",
+              "Amplía la mezcla: un producto con mucho margen sostiene al resto.",
+              "Aumentá la cantidad vendida aunque bajes un poco el precio.",
+            ].map((t) => (
+              <li key={t} className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[10px] font-bold text-white">
+                  ✓
+                </span>
+                {t}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+            Impuestos
+          </h2>
+          <ul className="mt-4 flex flex-col gap-3 text-sm text-zinc-700">
+            {[
+              "Si estás en Monotributo, la cuota es un costo fijo mensual.",
+              "Percepciones y retenciones pueden sacarte un % al cobrar.",
+              "En el campo «Impuestos» cargá el % del precio que se va en tributos.",
+              "Si sos Responsable Inscripto, sumá el IVA al precio final.",
+            ].map((t) => (
+              <li key={t} className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-bold text-zinc-900">
+                  !
+                </span>
+                {t}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+            Inflación y revisión
+          </h2>
+          <ul className="mt-4 flex flex-col gap-3 text-sm text-zinc-700">
+            {[
+              "En contexto inflacionario, revisá precios cada 2 a 4 semanas.",
+              "Preciá sobre el costo de reposición, no sobre el histórico.",
+              "Usá la comparativa para ver cómo te afecta una suba de insumos.",
+              "Ajustá el costo de tu hora de trabajo: también se devalúa.",
+            ].map((t) => (
+              <li key={t} className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[10px] font-bold text-white">
+                  ✓
+                </span>
+                {t}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+            Señales de alerta
+          </h2>
+          <ul className="mt-4 flex flex-col gap-3 text-sm text-zinc-700">
+            {[
+              "Margen real menor al 30% sobre el precio final.",
+              "Punto de equilibrio por encima de lo que realmente vendés.",
+              "El «precio más alto» del mercado que está mucho abajo del tuyo.",
+              "El precio sugerido no cubre la reposición de la materia prima.",
+            ].map((t) => (
+              <li key={t} className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-700">
+                  !
+                </span>
+                {t}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
     </div>
   );
 }

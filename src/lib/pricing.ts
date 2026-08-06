@@ -85,3 +85,22 @@
     export function round(n: number, decimals = 2): number {
     return Math.round(n * 10 ** decimals) / 10 ** decimals;
     }
+
+    export type Scenario = {
+    costFactor: number;
+    unitsFactor: number;
+    taxPoints: number;
+    };
+
+    export function applyScenario(input: PricingInput, scenario: Scenario): PricingInput {
+    return {
+        ...input,
+        materials: input.materials * scenario.costFactor,
+        packaging: input.packaging * scenario.costFactor,
+        laborRate: input.laborRate * scenario.costFactor,
+        otherVariable: input.otherVariable * scenario.costFactor,
+        fixedCosts: input.fixedCosts * scenario.costFactor,
+        unitsMonth: Math.max(1, input.unitsMonth * scenario.unitsFactor),
+        taxes: Math.max(0, input.taxes + scenario.taxPoints / 100),
+    };
+    }

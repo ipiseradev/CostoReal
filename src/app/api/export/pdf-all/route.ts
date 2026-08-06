@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { emailFromRequest } from "@/lib/access";
-import { buildExcel, excelFileName, type SavedProduct } from "@/lib/exports";
+import { buildPdfAll, pdfAllFileName, type SavedProduct } from "@/lib/exports";
 import type { PricingInput } from "@/lib/pricing";
 
 export const runtime = "nodejs";
@@ -37,13 +37,12 @@ export async function POST(request: Request) {
     updatedAt: r.updated_at,
   }));
 
-  const buffer = await buildExcel(products);
+  const buffer = await buildPdfAll(products);
 
   return new Response(new Uint8Array(buffer), {
     headers: {
-      "Content-Type":
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="${excelFileName()}"`,
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${pdfAllFileName()}"`,
     },
   });
 }

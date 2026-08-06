@@ -1,10 +1,11 @@
 import ExcelJS from "exceljs";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { calculatePricing, type PricingInput } from "@/lib/pricing";
+import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
+import { calculatePricing, type PricingInput, type PricingResult } from "@/lib/pricing";
 
 export type SavedProduct = {
   id: string;
   name: string;
+  category: string;
   price: number;
   data: PricingInput;
   createdAt: string;
@@ -36,6 +37,7 @@ export async function buildExcel(products: SavedProduct[]): Promise<Buffer> {
   const sheet = workbook.addWorksheet("Productos");
   sheet.columns = [
     { header: "Producto", key: "name", width: 26 },
+    { header: "Categoría", key: "category", width: 18 },
     { header: "Precio sugerido", key: "price", width: 16, style: { numFmt: "$#,##0" } },
     { header: "Margen real", key: "marginPercent", width: 13, style: { numFmt: "0.0\"%\"" } },
     { header: "Costo variable / u", key: "variableCostUnit", width: 17, style: { numFmt: "$#,##0" } },
@@ -65,6 +67,7 @@ export async function buildExcel(products: SavedProduct[]): Promise<Buffer> {
     const d = product.data;
     sheet.addRow({
       name: product.name,
+      category: product.category,
       price: result.price,
       marginPercent: result.marginPercent,
       variableCostUnit: result.variableCostUnit,
@@ -95,20 +98,20 @@ export async function buildExcel(products: SavedProduct[]): Promise<Buffer> {
   };
   headerRow.alignment = { vertical: "middle", horizontal: "center" };
   sheet.views = [{ state: "frozen", ySplit: 1 }];
-  sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: Math.max(products.length + 1, 2), column: sheet.columnCount } };
+  sheet.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: Math.max(products.length + 1, 2), column: sheet.columnCount },
+  };
 
   const buffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(buffer);
 }
 
-export async function buildPdf(product: SavedProduct): Promise<Buffer> {
-  const doc = await PDFDocument.create();
-  doc.setTitle(`${product.name} — CostoReal`);
-  doc.setAuthor("CostoReal");
+type PdfFonts = { font: PDFFont; bold: PDFFont };
 
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const page = doc.addPage([595, 842]);
+function drawProductPage(doc: PDFDocument, fonts: PdfFonts, product: SavedProduct): void {
+  const { font, bold } = fonts;
+  const page: PDFPage = doc.addPage([595, 842]);
   const W = page.getWidth();
   const M = 48;
 
@@ -125,7 +128,7 @@ export async function buildPdf(product: SavedProduct): Promise<Buffer> {
     { x: W - M - 130, y: 20, size: 10, font, color: rgb(0.85, 0.85, 0.85) }
   );
 
-  let result;
+  let result: PricingResult | null = null;
   try {
     result = calculatePricing(product.data);
   } catch {
@@ -133,6 +136,7 @@ export async function buildPdf(product: SavedProduct): Promise<Buffer> {
   }
 
   page.drawText(product.name, { x: M, y: 90, size: 24, font: bold, color: rgb(0.09, 0.09, 0.11) });
+  page.drawText(product.category.toUpperCase(), { x: M, y: 70, size: 10, font, color: rgb(0.45, 0.45, 0.45) });
 
   if (result) {
     page.drawText("Precio de venta sugerido", { x: M, y: 128, size: 11, font, color: rgb(0.45, 0.45, 0.45) });
@@ -184,9 +188,32 @@ export async function buildPdf(product: SavedProduct): Promise<Buffer> {
     "Los resultados son orientativos y no constituyen asesoramiento contable, impositivo ni legal.",
     { x: M, y: 36, size: 8, font, color: rgb(0.55, 0.55, 0.55) }
   );
+}
 
-  const bytes = await doc.save();
-  return Buffer.from(bytes);
+export async function buildPdf(product: SavedProduct): Promise<Buffer> {
+  const doc = await PDFDocument.create();
+  doc.setTitle(`${product.name} — CostoReal`);
+  doc.setAuthor("CostoReal");
+  const fonts: PdfFonts = {
+    font: await doc.embedFont(StandardFonts.Helvetica),
+    bold: await doc.embedFont(StandardFonts.HelveticaBold),
+  };
+  drawProductPage(doc, fonts, product);
+  return Buffer.from(await doc.save());
+}
+
+export async function buildPdfAll(products: SavedProduct[]): Promise<Buffer> {
+  const doc = await PDFDocument.create();
+  doc.setTitle("CostoReal — Productos");
+  doc.setAuthor("CostoReal");
+  const fonts: PdfFonts = {
+    font: await doc.embedFont(StandardFonts.Helvetica),
+    bold: await doc.embedFont(StandardFonts.HelveticaBold),
+  };
+  for (const product of products) {
+    drawProductPage(doc, fonts, product);
+  }
+  return Buffer.from(await doc.save());
 }
 
 export function pdfFileName(name: string): string {
@@ -195,4 +222,8 @@ export function pdfFileName(name: string): string {
 
 export function excelFileName(): string {
   return "costo-real-productos.xlsx";
+}
+
+export function pdfAllFileName(): string {
+  return "costo-real-productos.pdf";
 }

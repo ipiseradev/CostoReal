@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import { emailFromRequest } from "@/lib/access";
 import { calculatePricing, type PricingInput } from "@/lib/pricing";
+import { DEFAULT_CATEGORY } from "@/lib/categories";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,6 +11,7 @@ type ProductRow = {
   id: string;
   email: string;
   name: string;
+  category: string;
   data: unknown;
   price_suggested: string;
   created_at: string;
@@ -51,7 +53,7 @@ export async function GET(request: Request) {
 
   const sql = neon(databaseUrl);
   const rows = (await sql`
-    SELECT id, email, name, data, price_suggested, created_at, updated_at
+    SELECT id, email, name, category, data, price_suggested, created_at, updated_at
     FROM products
     WHERE email = ${email}
     ORDER BY updated_at DESC
@@ -61,6 +63,7 @@ export async function GET(request: Request) {
     products: rows.map((r) => ({
       id: r.id,
       name: r.name,
+      category: r.category,
       price: Number(r.price_suggested),
       data: r.data,
       createdAt: r.created_at,
@@ -75,7 +78,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "Sesión inválida o vencida. Volvé a ingresar tu email." }, { status: 401 });
   }
 
-  let body: { id?: string; name?: string; input?: unknown };
+  let body: { id?: string; name?: string; category?: string; input?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -88,6 +91,11 @@ export async function POST(request: Request) {
   }
   if (name.length > 120) {
     return Response.json({ error: "El nombre es demasiado largo" }, { status: 400 });
+  }
+
+  const category = (body?.category ?? "").trim() || DEFAULT_CATEGORY;
+  if (category.length > 40) {
+    return Response.json({ error: "La categoría es demasiado larga" }, { status: 400 });
   }
 
   const input = parseInput(body?.input);
@@ -121,14 +129,15 @@ export async function POST(request: Request) {
   }
 
   const rows = (await sql`
-    INSERT INTO products (id, email, name, data, price_suggested)
-    VALUES (${id}, ${email}, ${name}, ${JSON.stringify(input)}::jsonb, ${result.price})
+    INSERT INTO products (id, email, name, category, data, price_suggested)
+    VALUES (${id}, ${email}, ${name}, ${category}, ${JSON.stringify(input)}::jsonb, ${result.price})
     ON CONFLICT (id) DO UPDATE
       SET name = EXCLUDED.name,
+          category = EXCLUDED.category,
           data = EXCLUDED.data,
           price_suggested = EXCLUDED.price_suggested,
           updated_at = now()
-    RETURNING id, email, name, data, price_suggested, created_at, updated_at
+    RETURNING id, email, name, category, data, price_suggested, created_at, updated_at
   `) as unknown as ProductRow[];
 
   const row = rows[0];
@@ -140,6 +149,7 @@ export async function POST(request: Request) {
     product: {
       id: row.id,
       name: row.name,
+      category: row.category,
       price: Number(row.price_suggested),
       data: row.data,
       createdAt: row.created_at,

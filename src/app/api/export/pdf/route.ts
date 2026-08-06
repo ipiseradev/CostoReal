@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
   const sql = neon(databaseUrl);
   const rows = await sql`
-    SELECT id, name, data, price_suggested, created_at, updated_at
+    SELECT id, name, category, data, price_suggested, created_at, updated_at
     FROM products
     WHERE id = ${id} AND email = ${email}
     LIMIT 1
@@ -43,6 +43,7 @@ export async function POST(request: Request) {
   const product: SavedProduct = {
     id: row.id,
     name: row.name,
+    category: row.category,
     price: Number(row.price_suggested),
     data: row.data as PricingInput,
     createdAt: row.created_at,

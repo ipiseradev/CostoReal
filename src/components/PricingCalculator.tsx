@@ -7,6 +7,7 @@ import {
   type PricingInput,
   type PricingResult,
 } from "@/lib/pricing";
+import { RUBROS } from "@/lib/categories";
 
 const ars = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -157,12 +158,16 @@ export default function PricingCalculator({
   onSave,
   saving = false,
   saveLabel = "Guardar producto",
+  category = "",
+  onCategoryChange,
 }: {
   initial?: Partial<PricingFormState>;
   persistKey?: string | null;
   onSave?: (form: PricingFormState, result: PricingResult) => void;
   saving?: boolean;
   saveLabel?: string;
+  category?: string;
+  onCategoryChange?: (category: string) => void;
 }) {
   const isEdit = initial !== undefined;
 
@@ -215,18 +220,35 @@ export default function PricingCalculator({
     <div className="grid gap-8 p-4 sm:p-6 lg:grid-cols-2">
       <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
         {onSave && (
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-zinc-700">
-              Nombre del producto
-            </span>
-            <input
-              type="text"
-              value={form.name}
-              onChange={set("name")}
-              placeholder="Ej.: Vela de soja 200g"
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-left outline-none transition focus:border-zinc-900"
-            />
-          </label>
+          <div className="grid gap-4 sm:grid-cols-[1fr_220px]">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-zinc-700">
+                Nombre del producto
+              </span>
+              <input
+                type="text"
+                value={form.name}
+                onChange={set("name")}
+                placeholder="Ej.: Vela de soja 200g"
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-left outline-none transition focus:border-zinc-900"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-zinc-700">Rubro</span>
+              <select
+                value={category}
+                onChange={(e) => onCategoryChange?.(e.target.value)}
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-left outline-none transition focus:border-zinc-900"
+              >
+                <option value="">Elegí un rubro</option>
+                {RUBROS.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         )}
 
         <div className="flex rounded-lg bg-zinc-100 p-1">
