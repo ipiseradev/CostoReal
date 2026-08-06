@@ -1,6 +1,7 @@
     "use client";
 
-    import { useMemo, useState, type ChangeEvent } from "react";
+    import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+    import Link from "next/link";
     import { calculatePricing } from "@/lib/pricing";
 
     const ars = new Intl.NumberFormat("es-AR", {
@@ -41,29 +42,52 @@
     targetPrice: "15000",
     };
 
-    const num = (s: string) => (s === "" ? 0 : Number(s));
+    const STORAGE_KEY = "costoreal-calculator-v1";
+
+    function parseNum(s: string): number {
+    const t = s.trim().replace(/\s/g, "");
+    if (t === "" || t === "-" || t === ".") return 0;
+    if (t.includes(",")) {
+        return Number(t.replace(/\./g, "").replace(",", "."));
+    }
+    const parts = t.split(".");
+    if (parts.length > 1) {
+        const last = parts[parts.length - 1];
+        if (last.length === 3) {
+        return Number(t.replace(/\./g, ""));
+        }
+        return Number(t);
+    }
+    return Number(t);
+    }
+
+    const num = (s: string) => {
+    const n = parseNum(s);
+    return Number.isNaN(n) ? 0 : n;
+    };
 
     function Field({
     label,
     value,
     onChange,
+    prefix = "$",
     suffix,
     }: {
     label: string;
     value: string;
     onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+    prefix?: string;
     suffix?: string;
     }) {
     return (
         <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-zinc-700">{label}</span>
         <div className="flex items-center rounded-lg border border-zinc-300 bg-white focus-within:border-zinc-900">
-            <span className="pl-3 text-zinc-400">$</span>
+            {prefix && <span className="pl-3 text-zinc-400">{prefix}</span>}
             <input
-            type="number"
+            type="text"
             inputMode="decimal"
-            min="0"
-            step="any"
+            autoComplete="off"
             value={value}
             onChange={onChange}
             className="w-full rounded-lg bg-transparent px-2 py-2 text-right outline-none"
@@ -76,6 +100,30 @@
 
     export default function PricingCalculator() {
     const [form, setForm] = useState<FormState>(initialState);
+    const loadedRef = useRef(false);
+
+    useEffect(() => {
+        try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+            const saved = JSON.parse(raw) as Partial<FormState>;
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial de localStorage, patrón legítimo
+            setForm((f) => ({ ...f, ...saved }));
+        }
+        } catch {
+        // sin persistencia, se usan los valores por defecto
+        }
+        loadedRef.current = true;
+    }, []);
+
+    useEffect(() => {
+        if (!loadedRef.current) return;
+        try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(form));
+        } catch {
+        // localStorage no disponible
+        }
+    }, [form]);
 
     const set =
         (key: keyof FormState) => (e: ChangeEvent<HTMLInputElement>) =>
@@ -132,7 +180,7 @@
             <div className="grid grid-cols-2 gap-4">
             <Field label="Materia prima" value={form.materials} onChange={set("materials")} />
             <Field label="Packaging" value={form.packaging} onChange={set("packaging")} />
-            <Field label="Horas de mano de obra" suffix="hs" value={form.laborHours} onChange={set("laborHours")} />
+            <Field label="Horas de mano de obra" prefix="" suffix="hs" value={form.laborHours} onChange={set("laborHours")} />
             <Field label="Valor de la hora" value={form.laborRate} onChange={set("laborRate")} />
             <Field label="Otros costos variables" value={form.otherVariable} onChange={set("otherVariable")} />
             </div>
@@ -142,7 +190,7 @@
             </h2>
             <div className="grid grid-cols-2 gap-4">
             <Field label="Total costos fijos / mes" value={form.fixedCosts} onChange={set("fixedCosts")} />
-            <Field label="Unidades vendidas / mes" value={form.unitsMonth} onChange={set("unitsMonth")} />
+            <Field label="Unidades vendidas / mes" prefix="" suffix="u" value={form.unitsMonth} onChange={set("unitsMonth")} />
             </div>
 
             <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
@@ -187,12 +235,12 @@
             </div>
             )}
 
-        <a
-          href="#premium"
+        <Link
+          href="/premium"
           className="rounded-xl bg-zinc-900 px-5 py-3.5 text-center font-semibold text-white transition hover:bg-zinc-700"
         >
           Guardar y desbloquear todo — $9.900
-        </a>
+        </Link>
         <p className="text-center text-xs text-zinc-500">
           La versión gratis calcula 1 producto. Con Premium guardás ilimitados,
           exportás a Excel y recibís tu guía PDF.

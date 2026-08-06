@@ -4,7 +4,7 @@ import CheckoutWallet from "@/components/CheckoutWallet";
 import { PREMIUM_PRICE_ARS } from "@/lib/payments";
 
 export const metadata: Metadata = {
-  title: "Premium · CostoReal",
+  title: "Premium",
   description:
     "Desbloqueá todos los beneficios de CostoReal: productos ilimitados, Excel, PDF y guía de precios. Pago único con Mercado Pago.",
 };
@@ -58,8 +58,9 @@ export default async function PremiumPage({
           <div className="mx-auto w-full max-w-5xl px-5 py-6">
             <p className="text-sm font-semibold">✓ Pago aprobado</p>
             <p className="mt-1 text-sm text-zinc-600">
-              En instantes vas a poder acceder a todos tus beneficios. Revisá tu
-              email para activar la cuenta.
+              Tu acceso Premium quedó registrado con el email que usaste al
+              pagar. Estamos terminando el panel de Premium: te vamos a avisar
+              por email apenas esté disponible.
             </p>
           </div>
         </div>

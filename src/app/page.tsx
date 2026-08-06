@@ -2,10 +2,10 @@ import Link from "next/link";
 import PricingCalculator from "@/components/PricingCalculator";
 
 const stats = [
-  ["+10.000", "cálculos realizados"],
-  ["+1.200", "emprendedores"],
-  ["4,9/5", "valoración"],
-  ["$0", "gratis para siempre"],
+  ["Ilimitado", "cálculos gratuitos"],
+  ["$0", "para empezar"],
+  ["30 seg", "hasta tu primer precio"],
+  ["Pago único", "Premium de por vida"],
 ];
 
 const rubros = [
@@ -62,27 +62,6 @@ const steps = [
   ["3", "Desbloqueá todo", "Guardá productos, exportá a Excel y llevate la guía de precios."],
 ];
 
-const testimonials = [
-  {
-    name: "Martina G.",
-    role: "Tortas artesanales · Córdoba",
-    initials: "MG",
-    text: "Pensaba que ganaba plata y en realidad estaba perdiendo. Con el cálculo entendí mi punto de equilibrio y hoy cobro el triple que antes.",
-  },
-  {
-    name: "Nahuel R.",
-    role: "Cosmética natural · Buenos Aires",
-    initials: "NR",
-    text: "En 5 minutos vi que mi costo fijo por unidad me comía todo el margen. Lo corregí a tiempo, antes de la temporada alta.",
-  },
-  {
-    name: "Florencia S.",
-    role: "Tejidos y accesorios · Rosario",
-    initials: "FS",
-    text: "La plantilla Excel me ordenó todos los precios de una vez. Volví a cobrar con seguridad y sin adivinar.",
-  },
-];
-
 const freeFeatures = [
   "Cálculos ilimitados",
   "Margen real y punto de equilibrio",
@@ -135,12 +114,7 @@ function Check() {
   );
 }
 
-function Star() {
-  return <span className="text-sm text-zinc-900">★</span>;
-}
-
-function Eyebrow({ children }: { children: string }) {
-  return (
+function Eyebrow({ children }: { children: string }) {  return (
     <span className="flex items-center justify-center gap-4">
       <span className="h-px w-10 bg-zinc-300" />
       <span className="text-xs font-semibold uppercase tracking-[0.25em] text-zinc-500">
@@ -482,41 +456,22 @@ export default function Home() {
       </section>
 
       <section className="border-y border-zinc-200 bg-zinc-50">
-        <div className="mx-auto w-full max-w-6xl px-5 py-20 sm:py-24">
-          <div className="mx-auto mb-14 max-w-2xl text-center">
-            <Eyebrow>Testimonios</Eyebrow>
-            <h2 className="font-display mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
-              Emprendedores que empezaron a cobrar lo que valen
-            </h2>
-          </div>
-          <div className="grid gap-5 md:grid-cols-3">
-            {testimonials.map((t) => (
-              <figure
-                key={t.name}
-                className="flex flex-col gap-5 rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md"
-              >
-                <div className="flex items-center gap-1">
-                  <Star />
-                  <Star />
-                  <Star />
-                  <Star />
-                  <Star />
-                </div>
-                <blockquote className="font-display text-lg italic leading-relaxed text-zinc-800">
-                  &ldquo;{t.text}&rdquo;
-                </blockquote>
-                <figcaption className="mt-auto flex items-center gap-3 border-t border-zinc-100 pt-5">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-white">
-                    {t.initials}
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold">{t.name}</p>
-                    <p className="mt-0.5 text-xs text-zinc-500">{t.role}</p>
-                  </div>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
+        <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-5 py-20 text-center sm:py-24">
+          <Eyebrow>Beta abierta</Eyebrow>
+          <h2 className="font-display mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
+            Sumate a los primeros que cobran con datos
+          </h2>
+          <p className="text-lg leading-relaxed text-zinc-600">
+            CostoReal está en beta y cada cálculo nos ayuda a mejorarla. Probá
+            tu precio en 30 segundos, contanos qué mejorar y quedate con acceso
+            anticipado a Premium.
+          </p>
+          <a
+            href="#calculadora"
+            className="mt-2 rounded-xl bg-zinc-900 px-8 py-4 text-base font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-zinc-700 hover:shadow-lg"
+          >
+            Probar gratis
+          </a>
         </div>
       </section>
 
@@ -696,6 +651,13 @@ export default function Home() {
               Los resultados son orientativos y no constituyen asesoramiento
               contable, impositivo ni legal.
             </p>
+            <ul className="mt-4 flex flex-col gap-3 text-sm text-zinc-400">
+              <li>
+                <Link href="/terminos" className="transition hover:text-white">
+                  Términos y privacidad
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
         <div className="border-t border-zinc-800">
