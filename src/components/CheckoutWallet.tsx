@@ -39,7 +39,7 @@ export default function CheckoutWallet() {
           Completando la compra con <strong>{email}</strong>
         </div>
         <Wallet
-          initialization={{ preferenceId, redirectMode: "blank" }}
+          initialization={{ preferenceId, redirectMode: "self" }}
           customization={{
             theme: "dark",
             customStyle: {
