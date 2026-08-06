@@ -126,28 +126,43 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium text-zinc-700">{label}</span>
-      <div className="flex items-center rounded-lg border border-zinc-300 bg-white focus-within:border-zinc-900">
-        {prefix && <span className="pl-3 text-zinc-400">{prefix}</span>}
+      <span className="text-sm font-medium text-ink-soft">{label}</span>
+      <div className="flex items-center rounded-xl border border-line bg-cream transition focus-within:border-terra">
+        {prefix && <span className="pl-3 text-sm text-mute">{prefix}</span>}
         <input
           type="text"
           inputMode="decimal"
           autoComplete="off"
           value={value}
           onChange={onChange}
-          className="w-full rounded-lg bg-transparent px-2 py-2 text-right outline-none"
+          className="w-full rounded-xl bg-transparent px-2 py-2.5 text-right text-ink outline-none"
         />
-        {suffix && <span className="pr-3 text-xs text-zinc-400">{suffix}</span>}
+        {suffix && <span className="pr-3 text-xs font-medium text-mute">{suffix}</span>}
       </div>
     </label>
   );
 }
 
+function SectionTitle({ n, children }: { n: string; children: string }) {
+  return (
+    <h2 className="mt-2 flex items-center gap-3 border-b border-line pb-3">
+      <span className="font-display text-sm italic text-terra">{n}</span>
+      <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-mute">
+        {children}
+      </span>
+    </h2>
+  );
+}
+
 function ResultCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-      <p className="text-xs font-medium text-zinc-500">{label}</p>
-      <p className="mt-1 text-lg font-semibold text-zinc-900">{value}</p>
+    <div className="rounded-2xl border border-line bg-cream p-4">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-mute">
+        {label}
+      </p>
+      <p className="font-display mt-1.5 text-lg font-semibold tracking-tight text-ink">
+        {value}
+      </p>
     </div>
   );
 }
@@ -217,12 +232,12 @@ export default function PricingCalculator({
   const canCalculate = result !== null && result.totalCostUnit > 0;
 
   return (
-    <div className="grid gap-8 p-4 sm:p-6 lg:grid-cols-2">
-      <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+    <div className="grid gap-10 p-5 sm:p-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
+      <form className="flex flex-col gap-5" onSubmit={(e) => e.preventDefault()}>
         {onSave && (
           <div className="grid gap-4 sm:grid-cols-[1fr_220px]">
             <label className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-zinc-700">
+              <span className="text-sm font-medium text-ink-soft">
                 Nombre del producto
               </span>
               <input
@@ -230,15 +245,15 @@ export default function PricingCalculator({
                 value={form.name}
                 onChange={set("name")}
                 placeholder="Ej.: Vela de soja 200g"
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-left outline-none transition focus:border-zinc-900"
+                className="w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-left text-ink outline-none transition placeholder:text-mute/70 focus:border-terra"
               />
             </label>
             <label className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-zinc-700">Rubro</span>
+              <span className="text-sm font-medium text-ink-soft">Rubro</span>
               <select
                 value={category}
                 onChange={(e) => onCategoryChange?.(e.target.value)}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-left outline-none transition focus:border-zinc-900"
+                className="w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-left text-ink outline-none transition focus:border-terra"
               >
                 <option value="">Elegí un rubro</option>
                 {RUBROS.map((r) => (
@@ -251,16 +266,16 @@ export default function PricingCalculator({
           </div>
         )}
 
-        <div className="flex rounded-lg bg-zinc-100 p-1">
+        <div className="flex rounded-full border border-line bg-parchment p-1">
           {(["margin", "target"] as const).map((m) => (
             <button
               key={m}
               type="button"
               onClick={() => setForm((f) => ({ ...f, mode: m }))}
-              className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
+              className={`flex-1 rounded-full px-3 py-2 text-sm font-medium transition ${
                 form.mode === m
-                  ? "bg-white text-zinc-900 shadow"
-                  : "text-zinc-500"
+                  ? "bg-ink text-cream shadow-sm"
+                  : "text-ink-soft hover:text-ink"
               }`}
             >
               {m === "margin" ? "Por margen deseado" : "Por precio objetivo"}
@@ -268,9 +283,7 @@ export default function PricingCalculator({
           ))}
         </div>
 
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-          Costos variables (por unidad)
-        </h2>
+        <SectionTitle n="01">Costos variables · por unidad</SectionTitle>
         <div className="grid grid-cols-2 gap-4">
           <Field
             label="Materia prima"
@@ -301,9 +314,7 @@ export default function PricingCalculator({
           />
         </div>
 
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-          Costos fijos (mensuales)
-        </h2>
+        <SectionTitle n="02">Costos fijos · mensuales</SectionTitle>
         <div className="grid grid-cols-2 gap-4">
           <Field
             label="Total costos fijos / mes"
@@ -319,9 +330,7 @@ export default function PricingCalculator({
           />
         </div>
 
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-          Impuestos y margen
-        </h2>
+        <SectionTitle n="03">Impuestos y margen</SectionTitle>
         <div className="grid grid-cols-2 gap-4">
           <Field
             label="Impuestos (IVA, IIBB...)"
@@ -358,33 +367,37 @@ export default function PricingCalculator({
         </div>
       </form>
 
-      <div className="flex flex-col gap-4">
-        <div className="rounded-2xl bg-zinc-900 p-6 text-white">
-          <p className="text-sm font-medium text-zinc-300">
-            Precio de venta sugerido
-          </p>
-          <p className="mt-1 text-4xl font-bold">
-            {canCalculate ? ars.format(result.price) : "—"}
-          </p>
-          <p className="mt-2 text-sm text-zinc-300">
-            Margen:{" "}
-            {canCalculate
-              ? `${ars.format(result.marginAmount)} (${result.marginPercent.toFixed(1)}%)`
-              : "—"}
-          </p>
+      <div className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
+        <div className="relative overflow-hidden rounded-3xl bg-ink p-7 text-cream">
+          <div className="bg-grain pointer-events-none absolute inset-0 opacity-60" />
+          <div className="relative">
+            <span className="inline-block h-1 w-12 rounded-full bg-ochre" />
+            <p className="mt-4 text-xs font-medium uppercase tracking-[0.22em] text-mute">
+              Precio de venta sugerido
+            </p>
+            <p className="font-display mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
+              {canCalculate ? ars.format(result.price) : "—"}
+            </p>
+            <p className="mt-3 text-sm text-stone-300">
+              Margen:{" "}
+              {canCalculate
+                ? `${ars.format(result.marginAmount)} · ${result.marginPercent.toFixed(1)}%`
+                : "—"}
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <ResultCard
-            label="Costo variable / unidad"
+            label="Costo variable / u"
             value={canCalculate ? ars.format(result.variableCostUnit) : "—"}
           />
           <ResultCard
-            label="Costo fijo / unidad"
+            label="Costo fijo / u"
             value={canCalculate ? ars.format(result.fixedCostUnit) : "—"}
           />
           <ResultCard
-            label="Costo total / unidad"
+            label="Costo total / u"
             value={canCalculate ? ars.format(result.totalCostUnit) : "—"}
           />
           <ResultCard
@@ -394,9 +407,9 @@ export default function PricingCalculator({
         </div>
 
         {canCalculate && form.mode === "margin" && (
-          <div className="rounded-2xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600">
+          <div className="rounded-2xl border border-line bg-parchment p-4 text-sm text-ink-soft">
             Rango recomendado:{" "}
-            <span className="font-semibold text-zinc-900">
+            <span className="font-display font-semibold text-ink">
               {ars.format(result.priceMin)} – {ars.format(result.priceMax)}
             </span>
           </div>
@@ -407,7 +420,7 @@ export default function PricingCalculator({
             type="button"
             onClick={() => result && onSave(form, result)}
             disabled={saving || !canCalculate}
-            className="rounded-xl bg-zinc-900 px-5 py-3.5 text-center font-semibold text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-full bg-terra px-5 py-3.5 text-center font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-terra-dark hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
           >
             {saving ? "Guardando…" : saveLabel}
           </button>
@@ -415,11 +428,11 @@ export default function PricingCalculator({
           <>
             <Link
               href="/premium"
-              className="rounded-xl bg-zinc-900 px-5 py-3.5 text-center font-semibold text-white transition hover:bg-zinc-700"
+              className="rounded-full bg-terra px-5 py-3.5 text-center font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-terra-dark hover:shadow-md"
             >
               Guardar y desbloquear todo — $9.900
             </Link>
-            <p className="text-center text-xs text-zinc-500">
+            <p className="text-center text-xs leading-relaxed text-ink-soft">
               La versión gratis calcula 1 producto. Con Premium guardás
               ilimitados, exportás a Excel y recibís tu guía PDF.
             </p>

@@ -44,18 +44,19 @@ const sections: { title: string; body: string }[] = [
 
 export default function TerminosPage() {
   return (
-    <main className="flex min-h-full w-full flex-col bg-white text-zinc-900">
-      <header className="border-b border-zinc-200 bg-white/85 backdrop-blur-md">
+    <main className="flex min-h-full w-full flex-col bg-cream text-ink">
+      <div className="h-1 w-full bg-gradient-to-r from-terra via-ochre to-terra" />
+      <header className="border-b border-line bg-cream/85 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-5 py-3.5">
           <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-sm font-black text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink font-display text-sm font-bold italic text-cream">
               $
             </span>
-            CostoReal
+            <span className="font-display text-lg italic">CostoReal</span>
           </Link>
           <Link
             href="/"
-            className="text-sm font-medium text-zinc-600 transition hover:text-zinc-900"
+            className="text-sm font-medium text-ink-soft transition hover:text-ink"
           >
             ← Volver al inicio
           </Link>
@@ -63,27 +64,29 @@ export default function TerminosPage() {
       </header>
 
       <div className="mx-auto w-full max-w-3xl px-5 py-12 sm:py-16">
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-zinc-500">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-terra">
           Legal
         </p>
         <h1 className="font-display mt-4 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
           Términos y privacidad
         </h1>
-        <p className="mt-4 text-sm text-zinc-500">Última actualización: agosto de 2026</p>
+        <p className="mt-4 text-sm text-mute">Última actualización: agosto de 2026</p>
         <div className="mt-10 flex flex-col gap-8">
           {sections.map((s) => (
             <section key={s.title}>
-              <h2 className="text-lg font-semibold tracking-tight">{s.title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-zinc-600">{s.body}</p>
+              <h2 className="font-display text-lg font-semibold tracking-tight">
+                {s.title}
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-ink-soft">{s.body}</p>
             </section>
           ))}
         </div>
       </div>
 
-      <footer className="border-t border-zinc-200">
-        <div className="mx-auto flex w-full max-w-3xl flex-col items-center justify-between gap-2 px-5 py-6 text-xs text-zinc-500 sm:flex-row">
+      <footer className="border-t border-line">
+        <div className="mx-auto flex w-full max-w-3xl flex-col items-center justify-between gap-2 px-5 py-6 text-xs text-mute sm:flex-row">
           <p>© 2026 CostoReal · Hecho en Argentina</p>
-          <Link href="/" className="transition hover:text-zinc-900">
+          <Link href="/" className="transition hover:text-ink">
             Volver al inicio
           </Link>
         </div>

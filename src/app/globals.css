@@ -1,8 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf6ef;
+  --foreground: #221c15;
+}
+
+@theme {
+  --color-cream: #faf6ef;
+  --color-parchment: #f2ecdf;
+  --color-sand: #e8dfcc;
+  --color-ink: #221c15;
+  --color-ink-soft: #57534e;
+  --color-mute: #8a8378;
+  --color-line: #e3d9c6;
+  --color-terra: #c2410c;
+  --color-terra-dark: #9a3412;
+  --color-ochre: #e0a83e;
 }
 
 @theme inline {
@@ -24,8 +37,12 @@ body {
 }
 
 ::selection {
-  background: #18181b;
-  color: #ffffff;
+  background: #c2410c;
+  color: #faf6ef;
+}
+
+.bg-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E");
 }
 
 @keyframes marquee {
@@ -125,6 +142,25 @@ body {
 }
 [data-theme="dark"] .fill-zinc-100 {
   fill: #27272a !important;
+}
+[data-theme="dark"] .bg-cream {
+  background-color: #18181b !important;
+}
+[data-theme="dark"] .bg-parchment {
+  background-color: #211c15 !important;
+}
+[data-theme="dark"] .border-line {
+  border-color: #3f3f46 !important;
+}
+[data-theme="dark"] .text-ink {
+  color: #fafafa !important;
+}
+[data-theme="dark"] .text-ink-soft,
+[data-theme="dark"] .text-mute {
+  color: #a1a1aa !important;
+}
+[data-theme="dark"] .focus-within\:border-terra:focus-within {
+  border-color: #f87171 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
