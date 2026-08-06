@@ -89,9 +89,21 @@ function verifySignature(request: Request, dataId: string, secret: string): bool
   const xRequestId = request.headers.get("x-request-id") ?? "";
   if (!xSignature || !xRequestId) return false;
 
-  const params = new URLSearchParams(xSignature.replace(/,/g, "&"));
-  const ts = params.get("ts");
-  const v1 = params.get("v1");
+  const params: Record<string, string> = {};
+  for (const pair of xSignature.split(",")) {
+    const eq = pair.indexOf("=");
+    if (eq === -1) continue;
+    const key = pair.slice(0, eq).trim();
+    let value = pair.slice(eq + 1).trim();
+    try {
+      value = decodeURIComponent(value);
+    } catch {
+      // si el valor no viene percent-encoded, se usa tal cual
+    }
+    params[key] = value;
+  }
+  const ts = params["ts"];
+  const v1 = params["v1"];
   if (!ts || !v1) return false;
 
   const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
