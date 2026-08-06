@@ -58,10 +58,15 @@ export default async function PremiumPage({
           <div className="mx-auto w-full max-w-5xl px-5 py-6">
             <p className="text-sm font-semibold">✓ Pago aprobado</p>
             <p className="mt-1 text-sm text-zinc-600">
-              Tu acceso Premium quedó registrado con el email que usaste al
-              pagar. Estamos terminando el panel de Premium: te vamos a avisar
-              por email apenas esté disponible.
+              Tu acceso Premium ya está activo. Entrá a tu panel con el email
+              que usaste al pagar y empezá a guardar y exportar tus productos.
             </p>
+            <Link
+              href="/dashboard"
+              className="mt-4 inline-block rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-700"
+            >
+              Ir a mi panel
+            </Link>
           </div>
         </div>
       )}

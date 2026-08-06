@@ -641,6 +641,11 @@ export default function Home() {
                   Preguntas frecuentes
                 </a>
               </li>
+              <li>
+                <Link href="/dashboard" className="transition hover:text-white">
+                  Mi panel
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
