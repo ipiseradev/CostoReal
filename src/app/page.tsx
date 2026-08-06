@@ -15,6 +15,12 @@ const rubros = [
   "Artesanías",
   "Velas y aromas",
   "Servicios",
+  "Cafeterías",
+  "Dulces y repostería",
+  "Decoración",
+  "Belleza",
+  "Bazar y hogar",
+  "Accesorios",
 ];
 
 const problems = [
@@ -302,17 +308,34 @@ export default function Home() {
           </div>
           <ResultMockup />
         </div>
-        <div className="relative border-t border-zinc-200">
-          <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-3 px-5 py-6 sm:flex-row sm:justify-between">
-            <p className="text-xs font-medium uppercase tracking-[0.2em] text-zinc-400">
+        <div className="relative overflow-hidden border-t border-zinc-200">
+          <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-4 px-5 py-8 text-center">
+            <p className="text-xs font-medium uppercase tracking-[0.25em] text-zinc-400">
               Rubros que ya calculan con CostoReal
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1">
-              {rubros.map((r) => (
-                <span key={r} className="text-sm font-medium text-zinc-600">
-                  {r}
-                </span>
-              ))}
+            <div
+              className="w-full overflow-hidden"
+              style={{
+                maskImage:
+                  "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
+                WebkitMaskImage:
+                  "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
+              }}
+            >
+              <div className="marquee-track flex w-max items-center gap-9 whitespace-nowrap py-1">
+                {[...rubros, ...rubros].map((r, i) => (
+                  <span
+                    key={i}
+                    className="flex items-center gap-9 text-sm font-medium text-zinc-600"
+                  >
+                    {r}
+                    <span
+                      className="h-1 w-1 rounded-full bg-zinc-300"
+                      aria-hidden="true"
+                    />
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
