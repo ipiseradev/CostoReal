@@ -11,7 +11,7 @@
   --color-sand: #e8dfcc;
   --color-ink: #221c15;
   --color-ink-soft: #57534e;
-  --color-mute: #8a8378;
+  --color-mute: #6b645a;
   --color-line: #e3d9c6;
   --color-terra: #c2410c;
   --color-terra-dark: #9a3412;
@@ -60,6 +60,21 @@ body {
 
 .marquee-track:hover {
   animation-play-state: paused;
+}
+
+@keyframes sticky-cta-in {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sticky-cta {
+  animation: sticky-cta-in 0.35s ease-out;
 }
 
 [data-theme="dark"] {
@@ -165,6 +180,9 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .marquee-track {
+    animation: none;
+  }
+  .sticky-cta {
     animation: none;
   }
 }

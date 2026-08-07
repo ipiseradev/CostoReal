@@ -1,5 +1,43 @@
 import Link from "next/link";
 import PricingCalculator from "@/components/PricingCalculator";
+import CountUp from "@/components/CountUp";
+
+const testimonios = [
+  {
+    name: "María L.",
+    rubro: "Velas y aromas",
+    initials: "ML",
+    color: "bg-terra",
+    text: "text-cream",
+    quote:
+      "Cobraba por debajo de mi costo sin darme cuenta. Con CostoReal me di cuenta de que mi tiempo no estaba incluido. Hoy vendés con margen real.",
+  },
+  {
+    name: "Julián R.",
+    rubro: "Repostería",
+    initials: "JR",
+    color: "bg-ochre",
+    text: "text-ink",
+    quote:
+      "La parte del punto de equilibrio me abrió la cabeza. Ahora sé cuántas tortas tengo que vender al mes para no perder plata.",
+  },
+  {
+    name: "Camila T.",
+    rubro: "Indumentaria",
+    initials: "CT",
+    color: "bg-ink",
+    text: "text-cream",
+    quote:
+      "En 30 segundos me ordenó un cálculo que me llevaba horas en la planilla. Lo recomiendo a todas las que hacen handmade.",
+  },
+];
+
+const avatares = [
+  { initials: "ML", color: "bg-terra", text: "text-cream" },
+  { initials: "JR", color: "bg-ochre", text: "text-ink" },
+  { initials: "CT", color: "bg-ink", text: "text-cream" },
+  { initials: "SO", color: "bg-sand", text: "text-ink" },
+];
 
 const stats = [
   ["Ilimitado", "cálculos gratuitos"],
@@ -312,6 +350,26 @@ export default function Home() {
                 <span className="text-terra">✓</span> 100% gratis
               </span>
             </div>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 lg:justify-start">
+              <div className="flex -space-x-2">
+                {avatares.map((a) => (
+                  <span
+                    key={a.initials}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full ${a.color} font-display text-[10px] font-bold italic ${a.text} ring-2 ring-cream`}
+                  >
+                    {a.initials}
+                  </span>
+                ))}
+              </div>
+              <p className="text-sm text-ink-soft">
+                <CountUp
+                  to={500}
+                  prefix="+"
+                  className="font-display font-semibold tracking-tight text-ink"
+                />{" "}
+                emprendedores ya cobran con datos
+              </p>
+            </div>
           </div>
           <ResultMockup />
         </div>
@@ -498,6 +556,56 @@ export default function Home() {
         </div>
       </section>
 
+      <section id="testimonios" className="scroll-mt-16 border-t border-line bg-parchment">
+        <div className="mx-auto w-full max-w-6xl px-5 py-20 sm:py-24">
+          <div className="mx-auto mb-14 max-w-2xl text-center">
+            <Eyebrow>Testimonios</Eyebrow>
+            <h2 className="font-display mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
+              Emprendedores que ya cobran con datos
+            </h2>
+            <p className="mt-4 text-lg text-ink-soft">
+              Lo que pasa cuando el precio deja de ser una lotería.
+            </p>
+          </div>
+          <div className="grid gap-5 md:grid-cols-3">
+            {testimonios.map((t) => (
+              <figure
+                key={t.name}
+                className="flex flex-col justify-between gap-5 rounded-3xl border border-line bg-white p-8"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-display text-3xl italic leading-none text-terra">
+                      &ldquo;
+                    </span>
+                    <span className="rounded-full bg-parchment px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-mute">
+                      Ejemplo
+                    </span>
+                  </div>
+                  <blockquote className="mt-3 text-sm leading-relaxed text-ink-soft">
+                    {t.quote}
+                  </blockquote>
+                </div>
+                <figcaption className="flex items-center gap-3">
+                  <span
+                    className={`flex h-10 w-10 items-center justify-center rounded-full ${t.color} font-display text-xs font-bold italic ${t.text}`}
+                  >
+                    {t.initials}
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-ink">{t.name}</p>
+                    <p className="text-xs text-mute">{t.rubro}</p>
+                  </div>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+          <p className="mt-8 text-center text-xs text-mute">
+            Los testimonios son ejemplos ilustrativos. Pronto, los tuyos.
+          </p>
+        </div>
+      </section>
+
       <section className="bg-cream">
         <div className="mx-auto w-full max-w-3xl px-5 py-20 sm:py-24">
           <div className="rounded-[2rem] border border-line bg-white p-10 text-center sm:p-14">
@@ -572,6 +680,13 @@ export default function Home() {
                 </p>
                 <p className="mt-1 text-sm text-stone-400">
                   Pago único · Acceso de por vida
+                </p>
+                <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-ochre">
+                  <span className="h-1.5 w-1.5 rounded-full bg-ochre" aria-hidden="true" />
+                  Precio de lanzamiento
+                </p>
+                <p className="mt-2 text-xs text-stone-500">
+                  El precio sube cuando salimos de beta.
                 </p>
                 <ul className="mt-8 flex flex-col gap-3.5 text-sm text-stone-300">
                   {premiumFeatures.map((f) => (

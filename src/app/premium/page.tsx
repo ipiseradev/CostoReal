@@ -149,6 +149,13 @@ export default async function PremiumPage({
           <p className="mt-1 text-sm text-ink-soft">
             Acceso de por vida, sin mensualidad
           </p>
+          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-parchment px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-terra">
+            <span className="h-1.5 w-1.5 rounded-full bg-terra" aria-hidden="true" />
+            Precio de lanzamiento
+          </p>
+          <p className="mt-2 text-xs text-mute">
+            El precio sube cuando salimos de beta. Bloquealo hoy.
+          </p>
           <div className="mt-8">
             <CheckoutWallet />
           </div>
