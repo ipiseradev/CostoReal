@@ -49,10 +49,10 @@ export default function TerminosPage() {
       <header className="border-b border-line bg-cream/85 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-5 py-3.5">
           <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink font-display text-sm font-bold italic text-cream">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-terra font-display text-sm font-bold text-cream">
               $
             </span>
-            <span className="font-display text-lg italic">CostoReal</span>
+            <span className="font-display text-lg">CostoReal</span>
           </Link>
           <Link
             href="/"

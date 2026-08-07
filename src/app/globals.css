@@ -1,21 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf6ef;
-  --foreground: #221c15;
+  --background: #f2efe6;
+  --foreground: #0e1f17;
 }
 
 @theme {
-  --color-cream: #faf6ef;
-  --color-parchment: #f2ecdf;
-  --color-sand: #e8dfcc;
-  --color-ink: #221c15;
-  --color-ink-soft: #57534e;
-  --color-mute: #6b645a;
-  --color-line: #e3d9c6;
-  --color-terra: #c2410c;
-  --color-terra-dark: #9a3412;
-  --color-ochre: #e0a83e;
+  --color-cream: #f2efe6;
+  --color-parchment: #e7efe4;
+  --color-sand: #d7e2d3;
+  --color-ink: #0e1f17;
+  --color-ink-soft: #40534a;
+  --color-mute: #5d6b60;
+  --color-line: #ddd7c9;
+  --color-terra: #0e7a4b;
+  --color-terra-dark: #0b613b;
+  --color-moneda-bright: #0c9460;
+  --color-ochre: #b5791b;
 }
 
 @theme inline {
@@ -37,8 +38,8 @@ body {
 }
 
 ::selection {
-  background: #c2410c;
-  color: #faf6ef;
+  background: #0e7a4b;
+  color: #f2efe6;
 }
 
 .bg-grain {
@@ -164,6 +165,12 @@ body {
 [data-theme="dark"] .bg-parchment {
   background-color: #211c15 !important;
 }
+[data-theme="dark"] .bg-sand {
+  background-color: #27272a !important;
+}
+[data-theme="dark"] .bg-ink {
+  background-color: #0a0a0a !important;
+}
 [data-theme="dark"] .border-line {
   border-color: #3f3f46 !important;
 }
@@ -174,8 +181,30 @@ body {
 [data-theme="dark"] .text-mute {
   color: #a1a1aa !important;
 }
+[data-theme="dark"] .text-terra {
+  color: #34d399 !important;
+}
+[data-theme="dark"] .border-terra {
+  border-color: #34d399 !important;
+}
+[data-theme="dark"] .hover\:border-terra:hover {
+  border-color: #34d399 !important;
+}
+[data-theme="dark"] .bg-terra {
+  background-color: #10b981 !important;
+}
+[data-theme="dark"] .bg-terra-dark,
+[data-theme="dark"] .hover\:bg-terra-dark:hover {
+  background-color: #059669 !important;
+}
+[data-theme="dark"] .text-ochre {
+  color: #fbbf24 !important;
+}
+[data-theme="dark"] .bg-ochre {
+  background-color: #fbbf24 !important;
+}
 [data-theme="dark"] .focus-within\:border-terra:focus-within {
-  border-color: #f87171 !important;
+  border-color: #34d399 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

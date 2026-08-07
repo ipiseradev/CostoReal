@@ -8,6 +8,7 @@ import {
   type PricingResult,
 } from "@/lib/pricing";
 import { RUBROS } from "@/lib/categories";
+import ResultPanel from "@/components/ResultPanel";
 
 const ars = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -249,24 +250,11 @@ function Field({
 function SectionTitle({ n, children }: { n: string; children: string }) {
   return (
     <h2 className="mt-2 flex items-center gap-3 border-b border-line pb-3">
-      <span className="font-display text-sm italic text-terra">{n}</span>
+      <span className="font-display text-sm font-bold text-terra">{n}</span>
       <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-mute">
         {children}
       </span>
     </h2>
-  );
-}
-
-function ResultCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-line bg-cream p-4">
-      <p className="text-[11px] font-medium uppercase tracking-wider text-mute">
-        {label}
-      </p>
-      <p className="font-display mt-1.5 text-lg font-semibold tracking-tight text-ink">
-        {value}
-      </p>
-    </div>
   );
 }
 
@@ -530,100 +518,37 @@ export default function PricingCalculator({
       </form>
 
       <div className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
-        <div className="relative overflow-hidden rounded-3xl bg-ink p-7 text-cream">
-          <div className="bg-grain pointer-events-none absolute inset-0 opacity-60" />
-          <div className="relative">
-            <span className="inline-block h-1 w-12 rounded-full bg-ochre" />
-            <p className="mt-4 text-xs font-medium uppercase tracking-[0.22em] text-mute">
-              Precio de venta sugerido
-            </p>
-            <p className="font-display mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
-              {canCalculate ? ars.format(result.price) : "—"}
-            </p>
-            <p className="mt-3 text-sm text-stone-300">
-              Margen:{" "}
-              {canCalculate
-                ? `${ars.format(result.marginAmount)} · ${result.marginPercent.toFixed(1)}%`
-                : "—"}
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <ResultCard
-            label="Costo variable / u"
-            value={canCalculate ? ars.format(result.variableCostUnit) : "—"}
-          />
-          <ResultCard
-            label="Costo fijo / u"
-            value={canCalculate ? ars.format(result.fixedCostUnit) : "—"}
-          />
-          <ResultCard
-            label="Costo total / u"
-            value={canCalculate ? ars.format(result.totalCostUnit) : "—"}
-          />
-          <ResultCard
-            label="Punto de equilibrio"
-            value={canCalculate ? `${result.breakEvenUnits.toFixed(1)} u/mes` : "—"}
-          />
-        </div>
-
-        {canCalculate && form.mode === "margin" && (
-          <div className="rounded-2xl border border-line bg-parchment p-4">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-mute">
-              Rango recomendado
-            </p>
-            <p className="font-display mt-1 text-lg font-semibold tracking-tight text-ink">
-              {ars.format(result.priceMin)} – {ars.format(result.priceMax)}
-            </p>
-            <p className="mt-2 text-xs leading-relaxed text-ink-soft">
-              Entre {form.marginFloor}% y {form.marginCap}% de margen. Usá un
-              precio cerca del mínimo para ganar clientes y cerca del máximo
-              cuando ya tengas demanda.
-            </p>
-          </div>
-        )}
-
-        {canCalculate && (
-          <p className="rounded-xl border border-line bg-cream px-4 py-3 text-xs leading-relaxed text-ink-soft">
-            <strong className="font-semibold text-ink">Punto de equilibrio:</strong>{" "}
-            necesitás vender al menos{" "}
-            <strong className="font-semibold text-ink">
-              {result.breakEvenUnits.toFixed(1)} unidades al mes
-            </strong>{" "}
-            para no perder plata.
-          </p>
-        )}
-
-        {!canCalculate && (
-          <p className="rounded-xl border border-line bg-cream px-4 py-3 text-xs leading-relaxed text-ink-soft">
-            Cargá tus costos para ver tu precio y tu punto de equilibrio.
-          </p>
-        )}
-
-        {onSave ? (
-          <button
-            type="button"
-            onClick={() => result && onSave(form, result)}
-            disabled={saving || !canCalculate}
-            className="rounded-full bg-terra px-5 py-3.5 text-center font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-terra-dark hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
-          >
-            {saving ? "Guardando…" : saveLabel}
-          </button>
-        ) : (
-          <>
-            <Link
-              href="/premium"
-              className="rounded-full bg-terra px-5 py-3.5 text-center font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-terra-dark hover:shadow-md"
+        <ResultPanel
+          result={canCalculate ? result : null}
+          mode={form.mode}
+          unitsMonth={num(form.unitsMonth)}
+          range={{ floor: form.marginFloor, cap: form.marginCap }}
+          emptyText="Cargá tus costos para ver tu precio y tu punto de equilibrio."
+        >
+          {onSave ? (
+            <button
+              type="button"
+              onClick={() => result && onSave(form, result)}
+              disabled={saving || !canCalculate}
+              className="w-full rounded-full bg-terra px-5 py-3.5 text-center font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-terra-dark hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
             >
-              Guardar y desbloquear todo — $9.900
-            </Link>
-            <p className="text-center text-xs leading-relaxed text-ink-soft">
-              La versión gratis calcula 1 producto. Con Premium guardás
-              ilimitados, exportás a Excel y recibís tu guía PDF.
-            </p>
-          </>
-        )}
+              {saving ? "Guardando…" : saveLabel}
+            </button>
+          ) : (
+            <>
+              <Link
+                href="/premium"
+                className="block w-full rounded-full bg-terra px-5 py-3.5 text-center font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-terra-dark hover:shadow-md"
+              >
+                Guardar y desbloquear todo — $9.900
+              </Link>
+              <p className="mt-3 text-center text-xs leading-relaxed text-stone-400">
+                La versión gratis calcula 1 producto. Con Premium guardás
+                ilimitados, exportás a Excel y recibís tu guía PDF.
+              </p>
+            </>
+          )}
+        </ResultPanel>
       </div>
 
       {showSticky && (

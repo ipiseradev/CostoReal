@@ -32,7 +32,7 @@ function Banner({ result }: { result: string }) {
     return (
       <div className="border-b border-line bg-parchment">
         <div className="mx-auto w-full max-w-5xl px-5 py-6">
-          <p className="flex items-center gap-2 font-display text-lg font-semibold italic text-ink">
+          <p className="flex items-center gap-2 font-display text-lg font-bold text-ink">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-ochre text-xs font-bold text-ink">
               ✓
             </span>
@@ -56,7 +56,7 @@ function Banner({ result }: { result: string }) {
     return (
       <div className="border-b border-line bg-parchment">
         <div className="mx-auto w-full max-w-5xl px-5 py-6">
-          <p className="font-display text-lg font-semibold italic text-ink">
+          <p className="font-display text-lg font-bold text-ink">
             Pago pendiente
           </p>
           <p className="mt-1 text-sm text-ink-soft">
@@ -71,7 +71,7 @@ function Banner({ result }: { result: string }) {
     return (
       <div className="border-b border-line bg-parchment">
         <div className="mx-auto w-full max-w-5xl px-5 py-6">
-          <p className="font-display text-lg font-semibold italic text-ink">
+          <p className="font-display text-lg font-bold text-ink">
             El pago no se completó
           </p>
           <p className="mt-1 text-sm text-ink-soft">
@@ -97,10 +97,10 @@ export default async function PremiumPage({
       <header className="border-b border-line bg-cream/85 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-5 py-3.5">
           <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-ink font-display text-sm font-bold italic text-cream">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-terra font-display text-sm font-bold text-cream">
               $
             </span>
-            <span className="font-display text-lg italic">CostoReal</span>
+            <span className="font-display text-lg">CostoReal</span>
           </Link>
           <Link
             href="/"
@@ -120,7 +120,7 @@ export default async function PremiumPage({
           </p>
           <h1 className="font-display mt-4 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
             Desbloqueá{" "}
-            <span className="italic text-terra">todo el poder</span> de tus
+            <span className="text-terra">todo el poder</span> de tus
             números
           </h1>
           <p className="mt-5 text-lg leading-relaxed text-ink-soft">
@@ -142,7 +142,7 @@ export default async function PremiumPage({
           <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-mute">
             Pago único
           </p>
-          <p className="font-display mt-3 text-5xl font-semibold italic tracking-tight">
+          <p className="font-display mt-3 text-5xl font-bold tracking-tight">
             ${PREMIUM_PRICE_ARS.toLocaleString("es-AR")}
             <span className="text-lg font-normal not-italic text-mute"> ARS</span>
           </p>

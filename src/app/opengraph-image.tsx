@@ -14,8 +14,8 @@ export default function OpengraphImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "#0a0a0a",
-          color: "#fafafa",
+          background: "#f2efe6",
+          color: "#0e1f17",
           fontFamily: "system-ui, -apple-system, Segoe UI, Arial, sans-serif",
           padding: 80,
         }}
@@ -26,8 +26,8 @@ export default function OpengraphImage() {
               width: 72,
               height: 72,
               borderRadius: 16,
-              background: "#ffffff",
-              color: "#0a0a0a",
+              background: "#0e7a4b",
+              color: "#f2efe6",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -63,14 +63,7 @@ export default function OpengraphImage() {
             de tus productos
           </div>
         </div>
-        <div
-          style={{
-            display: "flex",
-            gap: 32,
-            fontSize: 28,
-            color: "#a1a1aa",
-          }}
-        >
+        <div style={{ display: "flex", gap: 32, fontSize: 28, color: "#5d6b60" }}>
           <span>Margen real</span>
           <span>Costos fijos</span>
           <span>Punto de equilibrio</span>
