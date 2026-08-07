@@ -9,6 +9,11 @@ const demoResult: PricingResult = {
   fixedCostUnit: 5000,
   totalCostUnit: 9200,
   price: 15333,
+  listPrice: 15333,
+  effectivePrice: 15333,
+  channelCostUnit: 0,
+  belowFloor: false,
+  unitsForGoal: 19.3,
   marginAmount: 5367,
   marginPercent: 35,
   breakEvenUnits: 19.3,
@@ -20,30 +25,30 @@ const demoResult: PricingResult = {
 const testimonios = [
   {
     name: "María L.",
-    rubro: "Velas y aromas",
+    rubro: "Peluquería y estética",
     initials: "ML",
     color: "bg-terra",
     text: "text-cream",
     quote:
-      "Cobraba por debajo de mi costo sin darme cuenta. Con CostoReal me di cuenta de que mi tiempo no estaba incluido. Hoy vendo con margen real.",
+      "Cobraba mis sesiones por debajo de mi costo sin darme cuenta: no sumaba insumos ni mi tiempo. Hoy precio con margen real y sé cuántos turnos necesito por mes.",
   },
   {
     name: "Julián R.",
-    rubro: "Repostería",
+    rubro: "Tienda online",
     initials: "JR",
     color: "bg-ochre",
     text: "text-ink",
     quote:
-      "La parte del punto de equilibrio me abrió la cabeza. Ahora sé cuántas tortas tengo que vender al mes para no perder plata.",
+      "La comisión de MercadoLibre se me comía el margen. Con CostoReal el precio sale calculado para que me quede lo que quiero después del canal y el envío.",
   },
   {
     name: "Camila T.",
-    rubro: "Indumentaria",
+    rubro: "Cursos y formación",
     initials: "CT",
     color: "bg-ink",
     text: "text-cream",
     quote:
-      "En 30 segundos me ordenó un cálculo que me llevaba horas en la planilla. Lo recomiendo a todas las que hacen handmade.",
+      "En 30 segundos me ordenó un cálculo que me llevaba horas en la planilla. Ahora sé cuántas ventas de mi curso cubren mis costos fijos y mi objetivo.",
   },
 ];
 
@@ -72,8 +77,13 @@ const rubros = [
   "Dulces y repostería",
   "Decoración",
   "Belleza",
-  "Bazar y hogar",
-  "Accesorios",
+  "Fotografía",
+  "Diseño",
+  "E-commerce",
+  "Tienda online",
+  "Cursos y formación",
+  "Consultoría",
+  "Peluquería y estética",
 ];
 
 const problems = [
@@ -97,22 +107,22 @@ const problems = [
 const benefits = [
   {
     title: "Margen real, no engañoso",
-    body: "El margen se calcula sobre el precio de venta, no sobre el costo. Sabés exactamente cuánto ganás por unidad.",
+    body: "El margen se calcula sobre el precio de venta, no sobre el costo. Sabés exactamente cuánto ganás por venta.",
   },
   {
     title: "Costos fijos incluidos",
-    body: "Alquiler, servicios y tu tiempo se prorratean por unidad. Dejás de cobrar por debajo de tu costo total.",
+    body: "Alquiler, servicios y tu tiempo se prorratean por venta. Dejás de cobrar por debajo de tu costo total.",
   },
   {
     title: "Punto de equilibrio",
-    body: "Cuántas unidades tenés que vender al mes para no perder plata. Sabés cuándo tu negocio empieza a rendir.",
+    body: "Cuántas ventas tenés que hacer al mes para no perder plata. Sabés cuándo tu negocio empieza a rendir.",
   },
 ];
 
 const steps = [
-  ["1", "Cargá tus costos", "Materia prima, mano de obra y costos fijos mensuales."],
+  ["1", "Cargá tus costos", "Materiales, tu tiempo, costos fijos y opciones de negocio."],
   ["2", "Mirá tu resultado", "Precio sugerido, margen real y punto de equilibrio al instante."],
-  ["3", "Desbloqueá todo", "Guardá productos, exportá a Excel y llevate la guía de precios."],
+  ["3", "Desbloqueá todo", "Guardá productos y servicios, exportá a Excel y llevate la guía de precios."],
 ];
 
 const freeFeatures = [
@@ -123,7 +133,7 @@ const freeFeatures = [
 ];
 
 const premiumFeatures = [
-  "Productos ilimitados guardados en la nube",
+  "Productos y servicios ilimitados en la nube",
   "Dashboard con búsqueda y categorías",
   "Exportación a Excel editable",
   "Reporte PDF imprimible por producto",
@@ -155,7 +165,7 @@ const faqs = [
   },
   {
     q: "¿Sirve para mi rubro?",
-    a: "Sí: comida, indumentaria, cosmética, artesanías, servicios... cualquier producto o servicio que se venda por unidad.",
+    a: "Sí: productos físicos, servicios, tiendas online, digitales y cursos. Si vendés algo con costos y necesitás definir un precio, sirve.",
   },
 ];
 

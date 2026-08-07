@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 const included = [
-  "Productos ilimitados guardados en la nube",
+  "Productos y servicios ilimitados en la nube",
   "Dashboard con búsqueda y categorías",
   "Exportación a Excel editable",
   "Reporte PDF imprimible por producto",

@@ -1105,7 +1105,7 @@ function ResumenView({
           value={stats.count > 0 ? ars.format(stats.revenue) : "—"}
           hint={
             stats.count > 0
-              ? "la plata que entra, según tus unidades/mes"
+              ? "la plata que entra, según tus ventas/mes"
               : "todavía no cargaste productos"
           }
           icon={<IconCoins className="h-5 w-5" />}
@@ -1133,7 +1133,7 @@ function ResumenView({
           accent="verde"
           label="Margen bruto / mes"
           value={stats.count > 0 ? ars.format(stats.margin) : "—"}
-          hint="por mes, sobre todos tus productos"
+          hint="por mes, sobre todos tus ítems"
           icon={<IconPercent className="h-5 w-5" />}
         >
           {stats.count > 0 && (
@@ -1144,7 +1144,7 @@ function ResumenView({
         </KpiCard>
         <KpiCard
           accent="neutro"
-          label="Productos guardados"
+          label="Ítems guardados"
           value={String(stats.count)}
           hint="en la nube, para editar y exportar"
           icon={<IconBox className="h-5 w-5" />}
@@ -1907,7 +1907,7 @@ function MetricasView({
           accent="bronce"
           label="Ingreso proyectado / mes"
           value={ars.format(stats.revenue)}
-          hint="a tus unidades actuales"
+          hint="a tus ventas actuales"
           icon={<IconCoins className="h-5 w-5" />}
           className="sm:col-span-2 lg:col-span-2 lg:row-span-2"
         >
@@ -1947,7 +1947,7 @@ function MetricasView({
             Ingreso mensual por producto
           </h2>
           <p className="mt-1 text-sm text-mute">
-            Precio sugerido × unidades que planificaste vender al mes.
+            Precio sugerido × ventas que planificaste por mes.
           </p>
           <div className="mt-6">
             <RevenueChart items={items} ars={ars} />
@@ -2008,6 +2008,11 @@ function GuiaView() {
     ["Servicios", "70% o más (tu tiempo es el costo)"],
     ["Dulces y repostería", "60 – 75%"],
     ["Cafeterías", "60 – 75%"],
+    ["E-commerce", "30 – 50% (las comisiones de canal comen margen)"],
+    ["Tienda online", "40 – 60%"],
+    ["Fotografía", "60 – 80%"],
+    ["Diseño y consultoría", "70% o más"],
+    ["Cursos y digitales", "75 – 90% (costo marginal bajo)"],
   ];
 
   return (
@@ -2018,7 +2023,7 @@ function GuiaView() {
         </h2>
         <p className="mt-4 text-lg leading-relaxed text-ink-soft">
           El precio tiene que cubrir <strong>todos tus costos</strong> (los
-          variables de cada unidad más una parte de los fijos) y dejarte una
+          variables de cada venta más una parte de los fijos) y dejarte una
           ganancia. Si el margen real que calcula CostoReal queda muy bajo,
           estás financiando tu negocio con tu propio bolsillo.
         </p>
@@ -2040,7 +2045,7 @@ function GuiaView() {
         </h2>
         <p className="mt-2 text-sm text-mute">
           Porcentajes de margen sobre el precio de venta que suelen funcionar en
-          Argentina para productos hechos a mano o de baja escala.
+          Argentina para productos y servicios de baja escala.
         </p>
         <div className="mt-5 grid gap-2 sm:grid-cols-2">
           {rubros.map(([rubro, margen]) => (

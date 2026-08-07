@@ -11,6 +11,14 @@ export const RUBROS = [
   "Belleza",
   "Bazar y hogar",
   "Accesorios",
+  "Fotografía",
+  "Diseño",
+  "E-commerce",
+  "Tienda online",
+  "Cursos y formación",
+  "Consultoría",
+  "Reparaciones",
+  "Peluquería y estética",
   "Otro",
 ] as const;
 

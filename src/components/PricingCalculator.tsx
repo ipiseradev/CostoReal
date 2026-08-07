@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import {
   calculatePricing,
+  type ItemType,
   type PricingInput,
   type PricingResult,
 } from "@/lib/pricing";
@@ -19,6 +20,7 @@ const ars = new Intl.NumberFormat("es-AR", {
 export type PricingFormState = {
   name: string;
   mode: "margin" | "target";
+  itemType: ItemType;
   materials: string;
   laborHours: string;
   laborRate: string;
@@ -31,11 +33,16 @@ export type PricingFormState = {
   marginFloor: string;
   marginCap: string;
   targetPrice: string;
+  discountPercent: string;
+  channelCommission: string;
+  shippingPerSale: string;
+  monthlyGoal: string;
 };
 
 const initialState: PricingFormState = {
   name: "",
   mode: "margin",
+  itemType: "producto",
   materials: "1500",
   laborHours: "1",
   laborRate: "2500",
@@ -48,6 +55,10 @@ const initialState: PricingFormState = {
   marginFloor: "20",
   marginCap: "50",
   targetPrice: "15000",
+  discountPercent: "0",
+  channelCommission: "0",
+  shippingPerSale: "0",
+  monthlyGoal: "0",
 };
 
 const STORAGE_KEY = "costoreal-calculator-v1";
@@ -55,6 +66,7 @@ const STORAGE_KEY = "costoreal-calculator-v1";
 const emptyState: PricingFormState = {
   name: "",
   mode: "margin",
+  itemType: "producto",
   materials: "0",
   laborHours: "0",
   laborRate: "0",
@@ -67,21 +79,101 @@ const emptyState: PricingFormState = {
   marginFloor: "0",
   marginCap: "0",
   targetPrice: "0",
+  discountPercent: "0",
+  channelCommission: "0",
+  shippingPerSale: "0",
+  monthlyGoal: "0",
 };
 
+const ITEM_TYPES: { value: ItemType; label: string }[] = [
+  { value: "producto", label: "Producto" },
+  { value: "servicio", label: "Servicio" },
+  { value: "digital", label: "Digital" },
+];
+
+const ITEM_LABELS: Record<
+  ItemType,
+  {
+    namePlaceholder: string;
+    materials: string;
+    packaging: string;
+    laborHours: string;
+    laborRate: string;
+    otherVariable: string;
+    unitsMonth: string;
+    unitsSuffix: string;
+    unitWord: string;
+    unitWordPlural: string;
+  }
+> = {
+  producto: {
+    namePlaceholder: "Ej.: Vela de soja 200g",
+    materials: "Materiales / insumos",
+    packaging: "Envase y presentación",
+    laborHours: "Horas de mano de obra",
+    laborRate: "Valor de la hora",
+    otherVariable: "Otros costos variables",
+    unitsMonth: "Unidades vendidas / mes",
+    unitsSuffix: "u",
+    unitWord: "unidad",
+    unitWordPlural: "unidades",
+  },
+  servicio: {
+    namePlaceholder: "Ej.: Sesión de peluquería",
+    materials: "Insumos y traslado",
+    packaging: "Envase y presentación",
+    laborHours: "Horas por servicio",
+    laborRate: "Valor de la hora",
+    otherVariable: "Otros costos variables",
+    unitsMonth: "Servicios vendidos / mes",
+    unitsSuffix: "serv.",
+    unitWord: "servicio",
+    unitWordPlural: "servicios",
+  },
+  digital: {
+    namePlaceholder: "Ej.: Curso online de fotografía",
+    materials: "Materiales",
+    packaging: "Envase",
+    laborHours: "Horas de creación",
+    laborRate: "Valor de la hora",
+    otherVariable: "Otros costos variables",
+    unitsMonth: "Ventas / mes",
+    unitsSuffix: "ventas",
+    unitWord: "venta",
+    unitWordPlural: "ventas",
+  },
+};
+
+const TAX_PRESETS: Array<[string, number]> = [
+  ["Monotributo", 3],
+  ["Responsable inscripto", 21],
+  ["Exento", 0],
+];
+
+const CHANNELS: Array<[string, number]> = [
+  ["Venta directa", 0],
+  ["MercadoLibre", 16],
+  ["Tiendanube", 2.5],
+  ["Rappi / PedidosYa", 25],
+];
+
 const HINTS: Partial<Record<keyof PricingFormState, string>> = {
-  materials: "Todo lo que se consume para hacer una unidad: tela, harina, cera, insumos…",
-  packaging: "Envase, etiqueta, bolsa o cinta que acompaña cada producto.",
-  laborHours: "Cuántas horas tuyas o de tu equipo se necesitan para hacer una unidad.",
+  materials: "Todo lo que se consume por venta: tela, harina, cera, insumos, traslado…",
+  packaging: "Envase, etiqueta, bolsa o cinta que acompaña cada venta.",
+  laborHours: "Cuántas horas tuyas o de tu equipo se necesitan por venta.",
   laborRate: "Cuánto vale tu hora de trabajo. Tu tiempo también es un costo.",
-  otherVariable: "Otros costos que varían por unidad, como comisiones o envíos.",
+  otherVariable: "Otros costos que varían por venta, como comisiones o envíos.",
   fixedCosts: "Alquiler, servicios, internet, herramientas… lo que pagás igual vendas o no.",
-  unitsMonth: "Cuántas unidades esperás vender por mes. Sirve para repartir los costos fijos.",
+  unitsMonth: "Cuántas ventas esperás por mes. Sirve para repartir los costos fijos.",
   taxes: "IVA, IIBB u otros impuestos que se descuentan del precio final.",
   marginPercent: "Cuánto querés ganar por venta, como porcentaje del precio final.",
   targetPrice: "El precio al que querés vender. La calculadora te dice qué margen te deja.",
   marginFloor: "Piso de tu rango: con menos margen que este no te conviene vender.",
   marginCap: "Techo de tu rango: con más margen que este podés perder ventas.",
+  discountPercent: "El descuento habitual que hacés (promos, clientes frecuentes). Se muestra el margen real con ese descuento.",
+  channelCommission: "El % que se queda el canal de venta (MercadoLibre, Tiendanube, apps de delivery). Se suma al cálculo para que tu margen no se achique.",
+  shippingPerSale: "Cuánto pagás de envío promedio por venta, si lo absorbés vos.",
+  monthlyGoal: "Cuánto querés ganar por mes. Se suma al punto de equilibrio para decirte cuántas ventas necesitás.",
 };
 
 const NUMERIC_KEYS: (keyof PricingFormState)[] = [
@@ -97,6 +189,10 @@ const NUMERIC_KEYS: (keyof PricingFormState)[] = [
   "marginFloor",
   "marginCap",
   "targetPrice",
+  "discountPercent",
+  "channelCommission",
+  "shippingPerSale",
+  "monthlyGoal",
 ];
 
 function fieldErrors(
@@ -139,13 +235,20 @@ const num = (s: string) => {
 };
 
 export function formToInput(form: PricingFormState): PricingInput {
+  const zeroIfHidden =
+    form.itemType === "producto"
+      ? { materials: num(form.materials), packaging: num(form.packaging) }
+      : form.itemType === "servicio"
+        ? { materials: num(form.materials), packaging: 0 }
+        : { materials: 0, packaging: 0 };
   return {
     name: form.name,
     mode: form.mode,
-    materials: num(form.materials),
+    itemType: form.itemType,
+    materials: zeroIfHidden.materials,
     laborHours: num(form.laborHours),
     laborRate: num(form.laborRate),
-    packaging: num(form.packaging),
+    packaging: zeroIfHidden.packaging,
     otherVariable: num(form.otherVariable),
     fixedCosts: num(form.fixedCosts),
     unitsMonth: num(form.unitsMonth),
@@ -154,6 +257,10 @@ export function formToInput(form: PricingFormState): PricingInput {
     marginFloor: num(form.marginFloor) / 100,
     marginCap: num(form.marginCap) / 100,
     targetPrice: num(form.targetPrice),
+    discountPercent: num(form.discountPercent) / 100,
+    channelCommission: num(form.channelCommission) / 100,
+    shippingPerSale: num(form.shippingPerSale),
+    monthlyGoal: num(form.monthlyGoal),
   };
 }
 
@@ -161,18 +268,23 @@ export function inputToForm(input: PricingInput): PricingFormState {
   return {
     name: input.name,
     mode: input.mode,
-    materials: String(input.materials),
-    laborHours: String(input.laborHours),
-    laborRate: String(input.laborRate),
-    packaging: String(input.packaging),
-    otherVariable: String(input.otherVariable),
-    fixedCosts: String(input.fixedCosts),
-    unitsMonth: String(input.unitsMonth),
-    taxes: String(Number((input.taxes * 100).toFixed(4))),
-    marginPercent: String(Number((input.marginPercent * 100).toFixed(4))),
-    marginFloor: String(Number((input.marginFloor * 100).toFixed(4))),
-    marginCap: String(Number((input.marginCap * 100).toFixed(4))),
-    targetPrice: String(input.targetPrice),
+    itemType: input.itemType || "producto",
+    materials: String(input.materials ?? 0),
+    laborHours: String(input.laborHours ?? 0),
+    laborRate: String(input.laborRate ?? 0),
+    packaging: String(input.packaging ?? 0),
+    otherVariable: String(input.otherVariable ?? 0),
+    fixedCosts: String(input.fixedCosts ?? 0),
+    unitsMonth: String(input.unitsMonth ?? 0),
+    taxes: String(Number(((input.taxes ?? 0) * 100).toFixed(4))),
+    marginPercent: String(Number(((input.marginPercent ?? 0) * 100).toFixed(4))),
+    marginFloor: String(Number(((input.marginFloor ?? 0) * 100).toFixed(4))),
+    marginCap: String(Number(((input.marginCap ?? 0) * 100).toFixed(4))),
+    targetPrice: String(input.targetPrice ?? 0),
+    discountPercent: String(Number(((input.discountPercent ?? 0) * 100).toFixed(4))),
+    channelCommission: String(Number(((input.channelCommission ?? 0) * 100).toFixed(4))),
+    shippingPerSale: String(input.shippingPerSale ?? 0),
+    monthlyGoal: String(input.monthlyGoal ?? 0),
   };
 }
 
@@ -312,6 +424,8 @@ export default function PricingCalculator({
     (key: keyof PricingFormState) => (e: ChangeEvent<HTMLInputElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }));
 
+  const setItemType = (itemType: ItemType) => setForm((f) => ({ ...f, itemType }));
+
   const errors = useMemo(() => fieldErrors(form), [form]);
 
   const result = useMemo(() => {
@@ -339,6 +453,8 @@ export default function PricingCalculator({
 
   const showSticky = canCalculate && inView;
 
+  const labels = ITEM_LABELS[form.itemType];
+
   return (
     <div ref={rootRef} className="grid gap-10 p-5 sm:p-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
       <form className="flex flex-col gap-5" onSubmit={(e) => e.preventDefault()}>
@@ -346,13 +462,13 @@ export default function PricingCalculator({
           <div className="grid gap-4 sm:grid-cols-[1fr_220px]">
             <label className="flex flex-col gap-1.5">
               <span className="text-sm font-medium text-ink-soft">
-                Nombre del producto
+                Nombre del producto o servicio
               </span>
               <input
                 type="text"
                 value={form.name}
                 onChange={set("name")}
-                placeholder="Ej.: Vela de soja 200g"
+                placeholder={labels.namePlaceholder}
                 className="w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-left text-ink outline-none transition placeholder:text-mute/70 focus:border-terra"
               />
             </label>
@@ -373,6 +489,33 @@ export default function PricingCalculator({
             </label>
           </div>
         )}
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex rounded-full border border-line bg-parchment p-1">
+            {ITEM_TYPES.map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                onClick={() => setItemType(t.value)}
+                aria-pressed={form.itemType === t.value}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                  form.itemType === t.value
+                    ? "bg-ink text-cream shadow-sm"
+                    : "text-ink-soft hover:text-ink"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-mute">
+            {form.itemType === "producto"
+              ? "Bienes físicos que fabricás o vendés"
+              : form.itemType === "servicio"
+                ? "Trabajo por sesión, hora o proyecto"
+                : "Cursos, membresías o archivos descargables"}
+          </p>
+        </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex rounded-full border border-line bg-parchment p-1">
@@ -409,24 +552,28 @@ export default function PricingCalculator({
           </div>
         </div>
 
-        <SectionTitle n="01">Costos variables · por unidad</SectionTitle>
+        <SectionTitle n="01">Costos variables · por venta</SectionTitle>
         <div className="grid grid-cols-2 gap-4">
+          {form.itemType !== "digital" && (
+            <Field
+              label={labels.materials}
+              value={form.materials}
+              onChange={set("materials")}
+              hint={HINTS.materials}
+              error={errors.materials}
+            />
+          )}
+          {form.itemType === "producto" && (
+            <Field
+              label={labels.packaging}
+              value={form.packaging}
+              onChange={set("packaging")}
+              hint={HINTS.packaging}
+              error={errors.packaging}
+            />
+          )}
           <Field
-            label="Materia prima"
-            value={form.materials}
-            onChange={set("materials")}
-            hint={HINTS.materials}
-            error={errors.materials}
-          />
-          <Field
-            label="Packaging"
-            value={form.packaging}
-            onChange={set("packaging")}
-            hint={HINTS.packaging}
-            error={errors.packaging}
-          />
-          <Field
-            label="Horas de mano de obra"
+            label={labels.laborHours}
             prefix=""
             suffix="hs"
             value={form.laborHours}
@@ -435,14 +582,14 @@ export default function PricingCalculator({
             error={errors.laborHours}
           />
           <Field
-            label="Valor de la hora"
+            label={labels.laborRate}
             value={form.laborRate}
             onChange={set("laborRate")}
             hint={HINTS.laborRate}
             error={errors.laborRate}
           />
           <Field
-            label="Otros costos variables"
+            label={labels.otherVariable}
             value={form.otherVariable}
             onChange={set("otherVariable")}
             hint={HINTS.otherVariable}
@@ -460,9 +607,9 @@ export default function PricingCalculator({
             error={errors.fixedCosts}
           />
           <Field
-            label="Unidades vendidas / mes"
+            label={labels.unitsMonth}
             prefix=""
-            suffix="u"
+            suffix={labels.unitsSuffix}
             value={form.unitsMonth}
             onChange={set("unitsMonth")}
             hint={HINTS.unitsMonth}
@@ -515,6 +662,83 @@ export default function PricingCalculator({
             error={errors.marginCap}
           />
         </div>
+
+        <SectionTitle n="04">Opciones de negocio</SectionTitle>
+        <div className="grid grid-cols-2 gap-4">
+          <label className="flex flex-col gap-1.5 sm:col-span-2">
+            <span className="text-sm font-medium text-ink-soft">
+              Impuestos según tu régimen
+            </span>
+            <span className="flex flex-wrap gap-2">
+              {TAX_PRESETS.map(([name, pct]) => (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, taxes: String(pct) }))}
+                  className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
+                    num(form.taxes) === pct
+                      ? "border-terra bg-terra text-white"
+                      : "border-line bg-white text-ink-soft hover:border-terra hover:text-ink"
+                  }`}
+                >
+                  {name} · {pct}%
+                </button>
+              ))}
+            </span>
+          </label>
+
+          <Field
+            label="Comisión del canal"
+            suffix="%"
+            value={form.channelCommission}
+            onChange={set("channelCommission")}
+            hint={HINTS.channelCommission}
+            error={errors.channelCommission}
+          />
+          <Field
+            label="Envío promedio por venta"
+            value={form.shippingPerSale}
+            onChange={set("shippingPerSale")}
+            hint={HINTS.shippingPerSale}
+            error={errors.shippingPerSale}
+          />
+
+          <label className="flex flex-col gap-1.5 sm:col-span-2">
+            <span className="text-sm font-medium text-ink-soft">Canal de venta</span>
+            <span className="flex flex-wrap gap-2">
+              {CHANNELS.map(([name, pct]) => (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, channelCommission: String(pct) }))}
+                  className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
+                    num(form.channelCommission) === pct
+                      ? "border-terra bg-terra text-white"
+                      : "border-line bg-white text-ink-soft hover:border-terra hover:text-ink"
+                  }`}
+                >
+                  {name}
+                </button>
+              ))}
+            </span>
+          </label>
+
+          <Field
+            label="Descuento habitual"
+            suffix="%"
+            value={form.discountPercent}
+            onChange={set("discountPercent")}
+            hint={HINTS.discountPercent}
+            error={errors.discountPercent}
+          />
+          <Field
+            label="Objetivo de ganancia / mes"
+            value={form.monthlyGoal}
+            onChange={set("monthlyGoal")}
+            hint={HINTS.monthlyGoal}
+            error={errors.monthlyGoal}
+          />
+        </div>
       </form>
 
       <div className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
@@ -523,6 +747,11 @@ export default function PricingCalculator({
           mode={form.mode}
           unitsMonth={num(form.unitsMonth)}
           range={{ floor: form.marginFloor, cap: form.marginCap }}
+          discountPercent={num(form.discountPercent)}
+          channelCommission={num(form.channelCommission)}
+          shippingPerSale={num(form.shippingPerSale)}
+          monthlyGoal={num(form.monthlyGoal)}
+          itemType={form.itemType}
           emptyText="Cargá tus costos para ver tu precio y tu punto de equilibrio."
         >
           {onSave ? (

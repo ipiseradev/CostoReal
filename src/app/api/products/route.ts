@@ -39,7 +39,29 @@ function parseInput(raw: unknown): PricingInput | null {
     if (typeof o[key] !== "number" || !Number.isFinite(o[key])) return null;
   }
   if (o.mode !== "margin" && o.mode !== "target") return null;
-  return o as unknown as PricingInput;
+  const optional = [
+    "discountPercent",
+    "channelCommission",
+    "shippingPerSale",
+    "monthlyGoal",
+  ];
+  for (const key of optional) {
+    if (
+      o[key] !== undefined &&
+      (typeof o[key] !== "number" || !Number.isFinite(o[key]) || (o[key] as number) < 0)
+    ) {
+      return null;
+    }
+  }
+  const itemType = o.itemType === "servicio" || o.itemType === "digital" ? o.itemType : "producto";
+  return {
+    ...(o as unknown as PricingInput),
+    itemType,
+    discountPercent: (o.discountPercent as number) ?? 0,
+    channelCommission: (o.channelCommission as number) ?? 0,
+    shippingPerSale: (o.shippingPerSale as number) ?? 0,
+    monthlyGoal: (o.monthlyGoal as number) ?? 0,
+  };
 }
 
 export async function GET(request: Request) {

@@ -12,6 +12,16 @@ export type SavedProduct = {
   updatedAt: string;
 };
 
+const ITEM_TYPE_LABEL: Record<string, string> = {
+  producto: "Producto",
+  servicio: "Servicio",
+  digital: "Digital",
+};
+
+function itemTypeLabel(t: PricingInput["itemType"] | undefined): string {
+  return ITEM_TYPE_LABEL[t ?? "producto"] ?? "Producto";
+}
+
 const ars = new Intl.NumberFormat("es-AR", {
   style: "currency",
   currency: "ARS",
@@ -36,24 +46,29 @@ export async function buildExcel(products: SavedProduct[]): Promise<Buffer> {
 
   const sheet = workbook.addWorksheet("Productos");
   sheet.columns = [
-    { header: "Producto", key: "name", width: 26 },
+    { header: "Ítem", key: "name", width: 26 },
+    { header: "Tipo", key: "itemType", width: 12 },
     { header: "Categoría", key: "category", width: 18 },
     { header: "Precio sugerido", key: "price", width: 16, style: { numFmt: "$#,##0" } },
     { header: "Margen real", key: "marginPercent", width: 13, style: { numFmt: "0.0\"%\"" } },
-    { header: "Costo variable / u", key: "variableCostUnit", width: 17, style: { numFmt: "$#,##0" } },
-    { header: "Costo fijo / u", key: "fixedCostUnit", width: 15, style: { numFmt: "$#,##0" } },
-    { header: "Costo total / u", key: "totalCostUnit", width: 15, style: { numFmt: "$#,##0" } },
-    { header: "Punto de equilibrio", key: "breakEvenUnits", width: 19, style: { numFmt: "0.0\" u/mes\"" } },
+    { header: "Costo variable / venta", key: "variableCostUnit", width: 17, style: { numFmt: "$#,##0" } },
+    { header: "Costo fijo / venta", key: "fixedCostUnit", width: 15, style: { numFmt: "$#,##0" } },
+    { header: "Costo total / venta", key: "totalCostUnit", width: 15, style: { numFmt: "$#,##0" } },
+    { header: "Punto de equilibrio", key: "breakEvenUnits", width: 19, style: { numFmt: "0.0\"/mes\"" } },
+    { header: "Ventas para objetivo", key: "unitsForGoal", width: 19, style: { numFmt: "0.0\"/mes\"" } },
     { header: "Rango de precio", key: "range", width: 26 },
-    { header: "Materia prima", key: "materials", width: 14, style: { numFmt: "$#,##0" } },
-    { header: "Packaging", key: "packaging", width: 12, style: { numFmt: "$#,##0" } },
-    { header: "Horas de mano de obra", key: "laborHours", width: 20, style: { numFmt: "0.00\" hs\"" } },
+    { header: "Materiales / insumos", key: "materials", width: 14, style: { numFmt: "$#,##0" } },
+    { header: "Envase y presentación", key: "packaging", width: 12, style: { numFmt: "$#,##0" } },
+    { header: "Horas de trabajo", key: "laborHours", width: 20, style: { numFmt: "0.00\" hs\"" } },
     { header: "Valor de la hora", key: "laborRate", width: 14, style: { numFmt: "$#,##0" } },
     { header: "Otros costos variables", key: "otherVariable", width: 20, style: { numFmt: "$#,##0" } },
     { header: "Costos fijos / mes", key: "fixedCosts", width: 17, style: { numFmt: "$#,##0" } },
-    { header: "Unidades / mes", key: "unitsMonth", width: 14, style: { numFmt: "0\" u\"" } },
+    { header: "Ventas / mes", key: "unitsMonth", width: 14, style: { numFmt: "0\"/mes\"" } },
     { header: "Impuestos", key: "taxes", width: 11, style: { numFmt: "0\"%\"" } },
     { header: "Margen objetivo", key: "marginTarget", width: 14, style: { numFmt: "0\"%\"" } },
+    { header: "Comisión de canal", key: "channelCommission", width: 16, style: { numFmt: "0\"%\"" } },
+    { header: "Envío / venta", key: "shippingPerSale", width: 14, style: { numFmt: "$#,##0" } },
+    { header: "Descuento", key: "discountPercent", width: 11, style: { numFmt: "0\"%\"" } },
     { header: "Actualizado", key: "updatedAt", width: 18 },
   ];
 
@@ -67,6 +82,7 @@ export async function buildExcel(products: SavedProduct[]): Promise<Buffer> {
     const d = product.data;
     sheet.addRow({
       name: product.name,
+      itemType: itemTypeLabel(d.itemType),
       category: product.category,
       price: result.price,
       marginPercent: result.marginPercent,
@@ -74,6 +90,7 @@ export async function buildExcel(products: SavedProduct[]): Promise<Buffer> {
       fixedCostUnit: result.fixedCostUnit,
       totalCostUnit: result.totalCostUnit,
       breakEvenUnits: result.breakEvenUnits,
+      unitsForGoal: result.unitsForGoal,
       range: d.mode === "margin" ? `${ars.format(result.priceMin)} – ${ars.format(result.priceMax)}` : "—",
       materials: d.materials,
       packaging: d.packaging,
@@ -84,6 +101,9 @@ export async function buildExcel(products: SavedProduct[]): Promise<Buffer> {
       unitsMonth: d.unitsMonth,
       taxes: d.taxes * 100,
       marginTarget: d.mode === "margin" ? d.marginPercent * 100 : null,
+      channelCommission: (d.channelCommission ?? 0) * 100,
+      shippingPerSale: d.shippingPerSale ?? 0,
+      discountPercent: (d.discountPercent ?? 0) * 100,
       updatedAt: new Date(product.updatedAt).toLocaleDateString("es-AR"),
     });
   }
@@ -145,19 +165,26 @@ function drawProductPage(doc: PDFDocument, fonts: PdfFonts, product: SavedProduc
 
   const rows: Array<[string, string, boolean]> = [];
   if (result) {
-    rows.push(["Costo variable por unidad", ars.format(result.variableCostUnit), false]);
-    rows.push(["Costo fijo por unidad", ars.format(result.fixedCostUnit), false]);
-    rows.push(["Costo total por unidad", ars.format(result.totalCostUnit), true]);
+    rows.push(["Costo variable por venta", ars.format(result.variableCostUnit), false]);
+    rows.push(["Costo fijo por venta", ars.format(result.fixedCostUnit), false]);
+    rows.push(["Costo total por venta", ars.format(result.totalCostUnit), true]);
     rows.push(["Margen real", `${result.marginPercent.toFixed(1)}%`, false]);
-    rows.push(["Punto de equilibrio", `${result.breakEvenUnits.toFixed(1)} u/mes`, true]);
+    rows.push(["Punto de equilibrio", `${result.breakEvenUnits.toFixed(1)} /mes`, true]);
+    if (result.unitsForGoal > 0) {
+      rows.push(["Ventas para tu objetivo", `${result.unitsForGoal.toFixed(1)} /mes`, true]);
+    }
   }
-  rows.push(["Materia prima por unidad", ars.format(product.data.materials), false]);
-  rows.push(["Packaging por unidad", ars.format(product.data.packaging), false]);
-  rows.push(["Mano de obra por unidad", `${product.data.laborHours} hs × ${ars.format(product.data.laborRate)}`, false]);
+  rows.push(["Tipo de ítem", itemTypeLabel(product.data.itemType), false]);
+  rows.push(["Materiales / insumos por venta", ars.format(product.data.materials ?? 0), false]);
+  rows.push(["Envase y presentación por venta", ars.format(product.data.packaging ?? 0), false]);
+  rows.push(["Trabajo por venta", `${product.data.laborHours} hs × ${ars.format(product.data.laborRate)}`, false]);
   rows.push(["Otros costos variables", ars.format(product.data.otherVariable), false]);
   rows.push(["Costos fijos mensuales", ars.format(product.data.fixedCosts), false]);
-  rows.push(["Unidades vendidas / mes", `${product.data.unitsMonth} u`, false]);
+  rows.push(["Ventas estimadas / mes", `${product.data.unitsMonth} /mes`, false]);
   rows.push(["Impuestos", `${(product.data.taxes * 100).toFixed(0)}%`, false]);
+  rows.push(["Comisión de canal", `${((product.data.channelCommission ?? 0) * 100).toFixed(1)}%`, false]);
+  rows.push(["Envío promedio por venta", ars.format(product.data.shippingPerSale ?? 0), false]);
+  rows.push(["Descuento habitual", `${((product.data.discountPercent ?? 0) * 100).toFixed(0)}%`, false]);
   if (product.data.mode === "margin") {
     rows.push(["Margen deseado", `${(product.data.marginPercent * 100).toFixed(0)}%`, false]);
   } else {
