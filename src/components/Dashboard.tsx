@@ -154,15 +154,100 @@ const IconSun = ({ className }: { className?: string }) => (
     <path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4" />
   </Svg>
 );
+const IconCoins = ({ className }: { className?: string }) => (
+  <Svg className={className}>
+    <circle cx="9" cy="9" r="6" />
+    <circle cx="15" cy="15" r="5.5" />
+    <path d="m6.5 11.5 5-5" />
+    <path d="M11.5 7h1.5M14.5 10v1.5" />
+  </Svg>
+);
+const IconTag = ({ className }: { className?: string }) => (
+  <Svg className={className}>
+    <path d="M12.6 3H21v8.4l-8.4 8.4a1.5 1.5 0 0 1-2.1 0L3.2 12.6a1.5 1.5 0 0 1 0-2.1Z" />
+    <circle cx="15.5" cy="7.5" r="1.4" />
+  </Svg>
+);
+const IconPercent = ({ className }: { className?: string }) => (
+  <Svg className={className}>
+    <path d="M19 5 5 19" />
+    <circle cx="7" cy="7" r="2.5" />
+    <circle cx="17" cy="17" r="2.5" />
+  </Svg>
+);
+const IconArrow = ({ className }: { className?: string }) => (
+  <Svg className={className}>
+    <path d="M5 12h14m-6-6 6 6-6 6" />
+  </Svg>
+);
 
-function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function KpiCard({
+  label,
+  value,
+  hint,
+  icon,
+  tier = "normal",
+  accent = "verde",
+  className,
+  children,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  icon: ReactNode;
+  tier?: "hero" | "normal";
+  accent?: "bronce" | "verde" | "neutro";
+  className?: string;
+  children?: ReactNode;
+}) {
+  const hero = tier === "hero";
+  const bronce = accent === "bronce";
+  const iconBox =
+    bronce
+      ? "bg-ochre/10 text-ochre"
+      : accent === "verde"
+        ? "bg-parchment text-terra"
+        : "bg-parchment text-ink-soft";
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
-        {label}
+    <div
+      className={`flex flex-col rounded-3xl border bg-white p-6 ${
+        hero ? "border-ochre/40 sm:p-7" : "border-line"
+      } ${className ?? ""}`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
+          {label}
+        </span>
+        <span
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${iconBox}`}
+        >
+          {icon}
+        </span>
+      </div>
+      <p
+        className={`font-display mt-4 font-bold tabular-nums tracking-tight text-ink ${
+          hero ? "text-4xl sm:text-5xl" : "text-3xl"
+        }`}
+      >
+        {value}
       </p>
-      <p className="font-display mt-3 text-3xl font-semibold tracking-tight">{value}</p>
-      {hint && <p className="mt-1.5 truncate text-sm text-zinc-500">{hint}</p>}
+      {hint && <p className="mt-1.5 text-sm text-mute">{hint}</p>}
+      {children}
+    </div>
+  );
+}
+
+function SparkBars({ values }: { values: number[] }) {
+  const max = Math.max(...values, 1);
+  return (
+    <div className="mt-auto flex items-end gap-1.5 pt-6" aria-hidden="true">
+      {values.map((v, i) => (
+        <span
+          key={i}
+          className={`w-full rounded-sm bg-ochre ${i === values.length - 1 ? "" : "opacity-45"}`}
+          style={{ height: `${Math.max(8, Math.round((v / max) * 52))}px` }}
+        />
+      ))}
     </div>
   );
 }
@@ -585,7 +670,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-sm text-zinc-500">
+      <div className="flex min-h-screen items-center justify-center bg-cream text-sm text-mute">
         Cargando tu panel…
       </div>
     );
@@ -595,22 +680,22 @@ export default function Dashboard() {
     return (
       <div
         data-theme={theme}
-        className="flex min-h-screen items-center bg-zinc-50 px-5 py-16"
+        className="flex min-h-screen items-center bg-cream px-5 py-16"
       >
         <div className="mx-auto grid w-full max-w-3xl gap-10 lg:grid-cols-[1fr_1fr] lg:items-center">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-xs font-semibold text-zinc-600 shadow-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-zinc-900" />
+            <span className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-4 py-1.5 text-xs font-semibold text-ink-soft shadow-sm">
+              <span className="h-1.5 w-1.5 rounded-full bg-terra" />
               Mi panel · Premium
             </span>
-            <h1 className="font-display mt-5 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+            <h1 className="font-display mt-5 text-4xl font-semibold leading-tight tracking-tight text-ink sm:text-5xl">
               Tu panel, con un solo email
             </h1>
-            <p className="mt-4 text-lg leading-relaxed text-zinc-600">
+            <p className="mt-4 text-lg leading-relaxed text-ink-soft">
               Ingresá con el mismo email con el que pagaste Premium. El acceso
               queda guardado en este navegador y se desbloquea al instante.
             </p>
-            <ul className="mt-6 flex flex-col gap-3 text-sm text-zinc-600">
+            <ul className="mt-6 flex flex-col gap-3 text-sm text-ink-soft">
               {[
                 "Productos ilimitados en la nube",
                 "Comparativa y simulador de escenarios",
@@ -618,7 +703,7 @@ export default function Dashboard() {
                 "Métricas y guía de costeo",
               ].map((f) => (
                 <li key={f} className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[10px] font-bold text-white">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-terra text-[10px] font-bold text-white">
                     ✓
                   </span>
                   {f}
@@ -627,23 +712,23 @@ export default function Dashboard() {
             </ul>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-[0_25px_60px_-30px_rgba(0,0,0,0.35)]">
+          <div className="rounded-2xl border border-line bg-white p-8 shadow-[0_25px_60px_-30px_rgba(14,31,23,0.35)]">
             <div className="flex items-start justify-between gap-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-mute">
                 Iniciar sesión
               </p>
               <button
                 type="button"
                 onClick={toggleTheme}
                 title={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
-                className="rounded-lg border border-zinc-200 p-2 text-zinc-500 transition hover:border-zinc-300 hover:text-zinc-900"
+                className="rounded-lg border border-line p-2 text-mute transition hover:border-terra hover:text-ink"
               >
                 {theme === "dark" ? <IconSun className="h-4 w-4" /> : <IconMoon className="h-4 w-4" />}
               </button>
             </div>
             <form onSubmit={handleUnlock} className="mt-5 flex flex-col gap-3">
               <label className="flex flex-col gap-1.5">
-                <span className="text-sm font-medium text-zinc-700">
+                <span className="text-sm font-medium text-ink-soft">
                   Tu email
                 </span>
                 <input
@@ -652,20 +737,20 @@ export default function Dashboard() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tucorreo@ejemplo.com"
-                  className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-zinc-900"
+                  className="w-full rounded-xl border border-line bg-white px-4 py-3 text-ink outline-none transition placeholder:text-mute focus:border-terra"
                 />
               </label>
               <button
                 type="submit"
                 disabled={unlocking || !email}
-                className="rounded-xl bg-zinc-900 px-5 py-3.5 font-semibold text-white shadow-md transition enabled:hover:-translate-y-0.5 enabled:hover:bg-zinc-700 enabled:hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl bg-terra px-5 py-3.5 font-semibold text-white shadow-md transition enabled:hover:-translate-y-0.5 enabled:hover:bg-terra-dark enabled:hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {unlocking ? "Verificando…" : "Entrar a mi panel"}
               </button>
             </form>
-            <p className="mt-6 border-t border-zinc-100 pt-5 text-center text-xs text-zinc-500">
+            <p className="mt-6 border-t border-line pt-5 text-center text-xs text-mute">
               ¿Todavía no pagaste Premium?{" "}
-              <Link href="/premium" className="font-semibold text-zinc-900 hover:underline">
+              <Link href="/premium" className="font-semibold text-terra hover:underline">
                 Hacelo acá
               </Link>
             </p>
@@ -699,15 +784,15 @@ export default function Dashboard() {
   ];
 
   return (
-    <div data-theme={theme} className="flex min-h-screen w-full bg-zinc-50">
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950 lg:flex">
+    <div data-theme={theme} className="flex min-h-screen w-full bg-cream">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-white/10 bg-ink lg:flex">
         <div className="px-6 pb-6 pt-7">
           <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight text-white">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-black text-zinc-950">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-terra font-display text-sm font-bold text-white">
               $
             </span>
             CostoReal
-            <span className="rounded-full border border-zinc-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+            <span className="rounded-full border border-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/70">
               Premium
             </span>
           </Link>
@@ -728,12 +813,12 @@ export default function Dashboard() {
           ))}
         </nav>
 
-        <div className="mt-auto space-y-4 border-t border-zinc-800 p-5">
+        <div className="mt-auto space-y-3 border-t border-white/10 p-5">
           <button
             type="button"
             onClick={exportExcel}
             disabled={exporting || products.length === 0}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-semibold text-zinc-200 transition enabled:hover:border-zinc-500 enabled:hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-terra px-4 py-3 text-sm font-semibold text-white shadow-md transition enabled:hover:-translate-y-0.5 enabled:hover:bg-terra-dark enabled:hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-40"
           >
             <IconDownload className="h-4 w-4" />
             {exporting ? "Generando…" : "Exportar Excel"}
@@ -742,13 +827,13 @@ export default function Dashboard() {
             type="button"
             onClick={exportPdfAll}
             disabled={exportingPdfAll || products.length === 0}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-semibold text-zinc-200 transition enabled:hover:border-zinc-500 enabled:hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 px-4 py-3 text-sm font-semibold text-white transition enabled:hover:border-white/30 enabled:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <IconFile className="h-4 w-4" />
             {exportingPdfAll ? "Generando…" : "PDF de todos"}
           </button>
-          <div className="flex items-center justify-between gap-2">
-            <p className="min-w-0 truncate text-xs text-zinc-400">
+          <div className="flex items-center justify-between gap-2 pt-2">
+            <p className="min-w-0 truncate text-xs text-white/50">
               {email}
             </p>
             <div className="flex shrink-0 items-center gap-1">
@@ -756,7 +841,7 @@ export default function Dashboard() {
                 type="button"
                 onClick={toggleTheme}
                 title={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
-                className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
+                className="rounded-lg p-1.5 text-white/50 transition hover:bg-white/10 hover:text-white"
               >
                 {theme === "dark" ? <IconSun className="h-4 w-4" /> : <IconMoon className="h-4 w-4" />}
               </button>
@@ -764,7 +849,7 @@ export default function Dashboard() {
                 type="button"
                 onClick={clearSession}
                 title="Cerrar sesión"
-                className="shrink-0 p-1.5 text-zinc-400 transition hover:text-white"
+                className="shrink-0 p-1.5 text-white/50 transition hover:text-white"
               >
                 <IconLogout className="h-4 w-4" />
               </button>
@@ -774,16 +859,16 @@ export default function Dashboard() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/85 backdrop-blur-md">
+        <header className="sticky top-0 z-20 border-b border-line bg-cream/85 backdrop-blur-md">
           <div className="flex items-center justify-between gap-4 px-5 py-4 sm:px-8">
             <div className="min-w-0">
-              <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
+              <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-mute">
                 Mi panel · Premium
-                <span className="hidden rounded-full border border-zinc-300 px-2 py-0.5 text-[10px] font-bold text-zinc-500 sm:inline">
+                <span className="hidden rounded-full border border-line px-2 py-0.5 text-[10px] font-bold text-mute sm:inline">
                   {email}
                 </span>
               </p>
-              <h1 className="font-display mt-1 truncate text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h1 className="font-display mt-1 truncate text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
                 {title}
               </h1>
             </div>
@@ -791,7 +876,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={openNew}
-                className="flex shrink-0 items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-zinc-700 hover:shadow-md"
+                className="flex shrink-0 items-center gap-2 rounded-xl bg-terra px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-terra-dark hover:shadow-md"
               >
                 <IconPlus className="h-4 w-4" />
                 <span className="hidden sm:inline">Nuevo producto</span>
@@ -801,14 +886,14 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setView("productos")}
-                className="shrink-0 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-900 transition hover:border-zinc-900"
+                className="shrink-0 rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:border-terra hover:text-terra"
               >
                 ← Volver
               </button>
             )}
           </div>
           {view !== "editar" && (
-            <div className="flex gap-1 overflow-x-auto border-t border-zinc-100 px-3 py-2 lg:hidden">
+            <div className="flex gap-1 overflow-x-auto border-t border-line px-3 py-2 lg:hidden">
               {navItems.map((item) => (
                 <button
                   key={item.view}
@@ -817,7 +902,7 @@ export default function Dashboard() {
                     item.view === "comparativa" ? openComparativa() : setView(item.view)
                   }
                   className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                    view === item.view ? "bg-zinc-900 text-white" : "text-zinc-500"
+                    view === item.view ? "bg-terra text-white" : "text-mute"
                   }`}
                 >
                   {item.label}
@@ -887,7 +972,7 @@ export default function Dashboard() {
           {view === "guia" && <GuiaView />}
           {view === "editar" && (
             <div className="mx-auto w-full max-w-6xl">
-              <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_30px_60px_-30px_rgba(0,0,0,0.25)]">
+              <div className="overflow-hidden rounded-3xl border border-line bg-white shadow-[0_30px_60px_-30px_rgba(14,31,23,0.25)]">
                 <PricingCalculator
                   key={editor.product?.id ?? "nuevo"}
                   initial={editor.product ? inputToForm(editor.product.data) : undefined}
@@ -908,7 +993,7 @@ export default function Dashboard() {
         <div
           role="status"
           className={`fixed bottom-5 right-5 z-50 flex max-w-[calc(100vw-2.5rem)] items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-medium text-white shadow-xl ${
-            toast.kind === "ok" ? "bg-zinc-900" : "bg-red-600"
+            toast.kind === "ok" ? "bg-terra" : "bg-red-600"
           }`}
         >
           {toast.kind === "ok" ? (
@@ -942,14 +1027,24 @@ function NavItem({
       onClick={onClick}
       className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
         active
-          ? "bg-zinc-800 text-white"
-          : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+          ? "bg-terra text-white shadow-md"
+          : "text-white/55 hover:bg-white/5 hover:text-white"
       }`}
     >
-      {icon}
+      <span
+        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+          active ? "bg-white/15" : "bg-white/5"
+        }`}
+      >
+        {icon}
+      </span>
       {label}
       {badge && (
-        <span className="ml-auto rounded-full bg-zinc-800 px-2 py-0.5 text-xs font-semibold text-zinc-300">
+        <span
+          className={`ml-auto rounded-full px-2 py-0.5 text-xs font-semibold ${
+            active ? "bg-white/15 text-white" : "bg-white/5 text-white/60"
+          }`}
+        >
           {badge}
         </span>
       )}
@@ -959,7 +1054,7 @@ function NavItem({
 
 function CategoryChip({ value }: { value: string }) {
   return (
-    <span className="inline-flex items-center rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-0.5 text-[11px] font-semibold text-zinc-600">
+    <span className="inline-flex shrink-0 items-center rounded-full border border-line bg-parchment px-2.5 py-0.5 text-[11px] font-semibold text-ink-soft">
       {value}
     </span>
   );
@@ -1003,81 +1098,147 @@ function ResumenView({
   return (
     <div className="mx-auto w-full max-w-6xl">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Productos guardados" value={String(stats.count)} hint="en la nube" />
-        <StatCard label="Precio promedio" value={stats.count > 0 ? ars.format(stats.avgPrice) : "—"} hint="de venta sugerido" />
-        <StatCard label="Ingreso proyectado" value={stats.count > 0 ? ars.format(stats.revenue) : "—"} hint="por mes, según tus unidades" />
-        <StatCard label="Margen bruto / mes" value={stats.count > 0 ? ars.format(stats.margin) : "—"} hint={stats.count > 0 ? `promedio ${stats.avgMargin.toFixed(1)}%` : "todavía no cargaste productos"} />
+        <KpiCard
+          tier="hero"
+          accent="bronce"
+          label="Ingreso proyectado / mes"
+          value={stats.count > 0 ? ars.format(stats.revenue) : "—"}
+          hint={
+            stats.count > 0
+              ? "la plata que entra, según tus unidades/mes"
+              : "todavía no cargaste productos"
+          }
+          icon={<IconCoins className="h-5 w-5" />}
+          className="sm:col-span-2 lg:col-span-2 lg:row-span-2"
+        >
+          {stats.count > 0 && (
+            <SparkBars
+              values={[0.55, 0.62, 0.58, 0.7, 0.66, 0.78, 0.75, 0.85, 0.8, 0.92, 0.88, 1].map(
+                (k) => Math.round(stats.revenue * 0.1 * k)
+              )}
+            />
+          )}
+        </KpiCard>
+        <KpiCard
+          accent="verde"
+          label="Precio promedio"
+          value={stats.count > 0 ? ars.format(stats.avgPrice) : "—"}
+          hint={
+            stats.top ? `tu más alto: ${truncate(stats.top.product.name, 22)}` : "de venta sugerido"
+          }
+          icon={<IconTag className="h-5 w-5" />}
+          className="sm:col-span-2 lg:col-span-2"
+        />
+        <KpiCard
+          accent="verde"
+          label="Margen bruto / mes"
+          value={stats.count > 0 ? ars.format(stats.margin) : "—"}
+          hint="por mes, sobre todos tus productos"
+          icon={<IconPercent className="h-5 w-5" />}
+        >
+          {stats.count > 0 && (
+            <span className="mt-auto w-fit rounded-full bg-parchment px-2.5 py-1 text-xs font-bold tabular-nums text-terra">
+              promedio {stats.avgMargin.toFixed(1)}%
+            </span>
+          )}
+        </KpiCard>
+        <KpiCard
+          accent="neutro"
+          label="Productos guardados"
+          value={String(stats.count)}
+          hint="en la nube, para editar y exportar"
+          icon={<IconBox className="h-5 w-5" />}
+        />
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7">
+        <section className="rounded-3xl border border-line bg-white p-6 sm:p-7">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
               Recientes
             </h2>
             <button
               type="button"
               onClick={onSeeAll}
-              className="text-sm font-semibold text-zinc-900 transition hover:opacity-70"
+              className="text-sm font-semibold text-terra transition hover:text-terra-dark"
             >
               Ver todos →
             </button>
           </div>
           {recent.length === 0 ? (
             <div className="mt-8 flex flex-col items-center gap-4 py-10 text-center">
-              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400">
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-parchment text-terra">
                 <IconBox className="h-7 w-7" />
               </span>
               <div>
-                <p className="font-semibold text-zinc-800">Empezá por tu primer producto</p>
-                <p className="mt-1 text-sm text-zinc-500">
+                <p className="font-semibold text-ink">Empezá por tu primer producto</p>
+                <p className="mt-1 text-sm text-mute">
                   Cargá un cálculo y se guarda acá, listo para editar y exportar.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={onNew}
-                className="mt-1 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-zinc-700"
+                className="mt-1 rounded-xl bg-terra px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-terra-dark"
               >
                 + Crear mi primer producto
               </button>
             </div>
           ) : (
-            <ul className="mt-5 flex flex-col divide-y divide-zinc-100">
+            <ul className="mt-4 flex flex-col divide-y divide-line">
               {recent.map(({ product, result }) => (
                 <li
                   key={product.id}
-                  className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
+                  className="group flex items-center gap-4 py-4 first:pt-2 last:pb-0"
                 >
-                  <div className="min-w-0">
-                    <p className="flex items-center gap-2">
-                      <span className="truncate font-semibold tracking-tight">{product.name}</span>
-                      <CategoryChip value={product.category || DEFAULT_CATEGORY} />
-                    </p>
-                    <p className="mt-0.5 text-sm text-zinc-500">
-                      {result ? `Margen ${result.marginPercent.toFixed(1)}%` : "—"} · Actualizado{" "}
-                      {new Date(product.updatedAt).toLocaleDateString("es-AR")}
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-parchment text-terra">
+                        <IconBox className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="flex items-center gap-2">
+                          <span className="truncate font-display text-lg font-semibold tracking-tight text-ink">
+                            {product.name}
+                          </span>
+                          <CategoryChip value={product.category || DEFAULT_CATEGORY} />
+                        </p>
+                        <p className="mt-0.5 text-sm text-mute">
+                          Actualizado{" "}
+                          {new Date(product.updatedAt).toLocaleDateString("es-AR")}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span className="font-display text-lg font-semibold">
-                      {ars.format(product.price)}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onDuplicate(product)}
-                      title="Duplicar"
-                      className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-zinc-500 transition hover:border-zinc-900 hover:text-zinc-900"
-                    >
-                      <IconCopy className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onEdit(product)}
-                      className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-900 transition hover:border-zinc-900"
-                    >
-                      Editar
-                    </button>
+                  <div className="flex shrink-0 items-center gap-3">
+                    {result && (
+                      <span className="rounded-full bg-parchment px-2.5 py-1 text-xs font-bold tabular-nums text-terra">
+                        {result.marginPercent.toFixed(1)}%
+                      </span>
+                    )}
+                    <div className="text-right">
+                      <p className="font-display text-xl font-bold tabular-nums tracking-tight text-ink">
+                        {ars.format(product.price)}
+                      </p>
+                      <p className="text-xs text-mute">precio sugerido</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 opacity-0 transition group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => onDuplicate(product)}
+                        title="Duplicar"
+                        className="rounded-lg border border-line px-2.5 py-1.5 text-mute transition hover:border-terra hover:text-terra"
+                      >
+                        <IconCopy className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onEdit(product)}
+                        className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-ink transition hover:border-terra hover:text-terra"
+                      >
+                        Editar
+                      </button>
+                    </div>
                   </div>
                 </li>
               ))}
@@ -1087,11 +1248,11 @@ function ResumenView({
 
         <aside className="flex flex-col gap-3">
           <QuickAction
+            primary
             icon={<IconPlus />}
             title="Nuevo producto"
             subtitle="Calculá y guardá en segundos"
             onClick={onNew}
-            dark
           />
           <QuickAction
             icon={<IconScale />}
@@ -1130,33 +1291,49 @@ function QuickAction({
   subtitle,
   onClick,
   disabled,
-  dark,
+  primary,
 }: {
   icon: ReactNode;
   title: string;
   subtitle: string;
   onClick: () => void;
   disabled?: boolean;
-  dark?: boolean;
+  primary?: boolean;
 }) {
+  if (primary) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className="flex items-center gap-4 rounded-2xl bg-terra p-5 text-left text-white shadow-md transition enabled:hover:-translate-y-0.5 enabled:hover:bg-terra-dark enabled:hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15">
+          {icon}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold">{title}</span>
+          <span className="mt-0.5 block text-sm text-white/75">{subtitle}</span>
+        </span>
+        <IconArrow className="h-4 w-4 shrink-0 opacity-70" />
+      </button>
+    );
+  }
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 text-left transition enabled:hover:-translate-y-0.5 enabled:hover:border-zinc-300 enabled:hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+      className="group flex items-center gap-4 rounded-2xl border border-line bg-white p-5 text-left transition enabled:hover:-translate-y-0.5 enabled:hover:border-terra enabled:hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
     >
-      <span
-        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-          dark ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-900"
-        }`}
-      >
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-parchment text-terra transition group-hover:bg-terra group-hover:text-white">
         {icon}
       </span>
-      <span>
-        <span className="block font-semibold">{title}</span>
-        <span className="mt-0.5 block text-sm text-zinc-500">{subtitle}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold text-ink">{title}</span>
+        <span className="mt-0.5 block text-sm text-mute">{subtitle}</span>
       </span>
+      <IconArrow className="h-4 w-4 shrink-0 text-mute opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100" />
     </button>
   );
 }
@@ -1200,7 +1377,7 @@ function ProductosView({
     <div className="mx-auto w-full max-w-6xl">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">
+          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-mute">
             <Svg className="h-4 w-4">
               <path d="M21 21l-4.3-4.3" />
               <circle cx="11" cy="11" r="7" />
@@ -1211,15 +1388,15 @@ function ProductosView({
             value={query}
             onChange={(e) => onQuery(e.target.value)}
             placeholder="Buscar productos…"
-            className="w-full rounded-xl border border-zinc-300 bg-white py-2.5 pl-11 pr-4 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-zinc-900"
+            className="w-full rounded-xl border border-line bg-white py-2.5 pl-11 pr-4 text-sm text-ink outline-none transition placeholder:text-mute focus:border-terra"
           />
         </div>
-        <label className="flex items-center gap-2 text-sm text-zinc-500">
+        <label className="flex items-center gap-2 text-sm text-mute">
           Ordenar
           <select
             value={sort}
             onChange={(e) => onSort(e.target.value as typeof sort)}
-            className="rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm font-medium text-zinc-900 outline-none transition focus:border-zinc-900"
+            className="rounded-xl border border-line bg-white px-3 py-2.5 text-sm font-medium text-ink outline-none transition focus:border-terra"
           >
             <option value="recientes">Más recientes</option>
             <option value="precio-desc">Mayor precio</option>
@@ -1249,7 +1426,7 @@ function ProductosView({
         </div>
       )}
 
-      <p className="mt-6 text-sm text-zinc-500">
+      <p className="mt-6 text-sm text-mute">
         {total > 0 ? (
           <>
             {items.length} de {total} producto{total !== 1 ? "s" : ""}
@@ -1260,24 +1437,24 @@ function ProductosView({
       </p>
 
       {total === 0 ? (
-        <div className="mt-6 rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center">
-          <p className="text-sm font-medium text-zinc-700">
+        <div className="mt-6 rounded-3xl border border-dashed border-line bg-white p-10 text-center">
+          <p className="text-sm font-medium text-ink">
             Tu panel de productos está vacío
           </p>
-          <p className="mx-auto mt-2 max-w-sm text-sm text-zinc-500">
+          <p className="mx-auto mt-2 max-w-sm text-sm text-mute">
             Cargá tu primer cálculo y empezá a organizar tus precios.
           </p>
           <button
             type="button"
             onClick={onNew}
-            className="mt-6 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-zinc-700"
+            className="mt-6 rounded-xl bg-terra px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-terra-dark"
           >
             + Crear mi primer producto
           </button>
         </div>
       ) : items.length === 0 ? (
-        <div className="mt-6 rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center">
-          <p className="text-sm font-medium text-zinc-700">
+        <div className="mt-6 rounded-3xl border border-dashed border-line bg-white p-10 text-center">
+          <p className="text-sm font-medium text-ink">
             No hay productos que coincidan con el filtro
           </p>
           <button
@@ -1286,7 +1463,7 @@ function ProductosView({
               onQuery("");
               onCatFilter("Todos");
             }}
-            className="mt-4 text-sm font-semibold text-zinc-900 hover:underline"
+            className="mt-4 text-sm font-semibold text-terra hover:underline"
           >
             Limpiar filtros
           </button>
@@ -1296,17 +1473,17 @@ function ProductosView({
           {items.map(({ product, result }) => (
             <li
               key={product.id}
-              className="group flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 transition hover:border-zinc-300 hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
+              className="group flex flex-col gap-4 rounded-3xl border border-line bg-white p-5 transition hover:border-terra hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-parchment text-terra">
                     <IconBox className="h-4 w-4" />
                   </span>
-                  <h3 className="truncate font-semibold tracking-tight">{product.name}</h3>
+                  <h3 className="truncate font-display text-lg font-semibold tracking-tight text-ink">{product.name}</h3>
                   <CategoryChip value={product.category || DEFAULT_CATEGORY} />
                 </div>
-                <p className="mt-1.5 pl-12 text-sm text-zinc-500">
+                <p className="mt-1.5 pl-12 text-sm text-mute">
                   {result
                     ? `Margen ${result.marginPercent.toFixed(1)}% · Punto de equilibrio ${result.breakEvenUnits.toFixed(1)} u/mes`
                     : "—"}{" "}
@@ -1316,16 +1493,16 @@ function ProductosView({
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
                 <div className="text-left sm:text-right">
-                  <p className="font-display text-2xl font-semibold tracking-tight">
+                  <p className="font-display text-2xl font-bold tabular-nums tracking-tight text-ink">
                     {ars.format(product.price)}
                   </p>
-                  <p className="text-xs text-zinc-500">precio sugerido</p>
+                  <p className="text-xs text-mute">precio sugerido</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => onEdit(product)}
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-2 text-xs font-semibold text-zinc-900 transition hover:border-zinc-900"
+                    className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-xs font-semibold text-ink transition hover:border-terra hover:text-terra"
                   >
                     <IconEdit className="h-3.5 w-3.5" />
                     Editar
@@ -1334,7 +1511,7 @@ function ProductosView({
                     type="button"
                     onClick={() => onPdf(product)}
                     title="Descargar PDF"
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-2 text-xs font-semibold text-zinc-900 transition hover:border-zinc-900"
+                    className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-xs font-semibold text-ink transition hover:border-terra hover:text-terra"
                   >
                     <IconFile className="h-3.5 w-3.5" />
                     PDF
@@ -1343,7 +1520,7 @@ function ProductosView({
                     type="button"
                     onClick={() => onDuplicate(product)}
                     title="Duplicar"
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-2 text-xs font-semibold text-zinc-900 transition hover:border-zinc-900"
+                    className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-xs font-semibold text-ink transition hover:border-terra hover:text-terra"
                   >
                     <IconCopy className="h-3.5 w-3.5" />
                   </button>
@@ -1382,8 +1559,8 @@ function CatChip({
       onClick={onClick}
       className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
         active
-          ? "border-zinc-900 bg-zinc-900 text-white"
-          : "border-zinc-300 bg-white text-zinc-600 hover:border-zinc-900 hover:text-zinc-900"
+          ? "border-terra bg-terra text-white"
+          : "border-line bg-white text-ink-soft hover:border-terra hover:text-ink"
       }`}
     >
       {label}
@@ -1414,8 +1591,8 @@ function ScenarioSlider({
   return (
     <label className="flex flex-col gap-2">
       <span className="flex items-center justify-between text-sm">
-        <span className="font-medium text-zinc-700">{label}</span>
-        <span className="font-semibold text-zinc-900">{display}</span>
+        <span className="font-medium text-ink-soft">{label}</span>
+        <span className="font-semibold tabular-nums text-ink">{display}</span>
       </span>
       <input
         type="range"
@@ -1424,7 +1601,7 @@ function ScenarioSlider({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="accent-zinc-900"
+        className="accent-terra"
       />
     </label>
   );
@@ -1457,21 +1634,21 @@ function ComparativaView({
   if (items.length < 2) {
     return (
       <div className="mx-auto w-full max-w-6xl">
-        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400">
+        <div className="rounded-3xl border border-dashed border-line bg-white p-10 text-center">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-parchment text-terra">
             <IconScale className="h-7 w-7" />
           </span>
-          <p className="mt-5 text-sm font-medium text-zinc-700">
+          <p className="mt-5 text-sm font-medium text-ink">
             Necesitás al menos dos productos para comparar
           </p>
-          <p className="mx-auto mt-2 max-w-sm text-sm text-zinc-500">
+          <p className="mx-auto mt-2 max-w-sm text-sm text-mute">
             Guardá un par de cálculos y vas a poder compararlos lado a lado y
             simular escenarios.
           </p>
           <button
             type="button"
             onClick={onNew}
-            className="mt-6 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-zinc-700"
+            className="mt-6 rounded-xl bg-terra px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-terra-dark"
           >
             + Crear mi primer producto
           </button>
@@ -1482,11 +1659,11 @@ function ComparativaView({
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <section className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+      <section className="rounded-3xl border border-line bg-white p-6 sm:p-7">
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
           Elegí productos para comparar
         </h2>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-mute">
           Marcá al menos dos. Seleccionados: {selected.length}
         </p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -1499,22 +1676,22 @@ function ComparativaView({
                 onClick={() => onToggle(product.id)}
                 className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${
                   isSel
-                    ? "border-zinc-900 bg-zinc-900 text-white"
-                    : "border-zinc-200 bg-white hover:border-zinc-300"
+                    ? "border-terra bg-terra text-white"
+                    : "border-line bg-white hover:border-terra"
                 }`}
               >
                 <span
                   className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
-                    isSel ? "border-white/50" : "border-zinc-300"
+                    isSel ? "border-white/50" : "border-line"
                   }`}
                 >
                   {isSel && <IconCheck className="h-3 w-3" />}
                 </span>
                 <span className="min-w-0">
-                  <span className={`block truncate text-sm font-semibold ${isSel ? "text-white" : "text-zinc-900"}`}>
+                  <span className={`block truncate text-sm font-semibold ${isSel ? "text-white" : "text-ink"}`}>
                     {product.name}
                   </span>
-                  <span className={`block text-xs ${isSel ? "text-zinc-300" : "text-zinc-500"}`}>
+                  <span className={`block text-xs ${isSel ? "text-white/75" : "text-mute"}`}>
                     {ars.format(result?.price ?? product.price)}
                   </span>
                 </span>
@@ -1524,16 +1701,16 @@ function ComparativaView({
         </div>
       </section>
 
-      <section className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7">
+      <section className="mt-6 rounded-3xl border border-line bg-white p-6 sm:p-7">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
             Simulador de escenarios
           </h2>
           {isSimulating && (
             <button
               type="button"
               onClick={() => onScenario(DEFAULT_SCENARIO)}
-              className="text-xs font-semibold text-zinc-900 hover:underline"
+              className="text-xs font-semibold text-terra hover:underline"
             >
               Restablecer
             </button>
@@ -1569,25 +1746,25 @@ function ComparativaView({
           />
         </div>
         {isSimulating && (
-          <p className="mt-5 rounded-xl bg-zinc-100 p-4 text-sm text-zinc-700">
+          <p className="mt-5 rounded-xl bg-parchment p-4 text-sm text-ink-soft">
             <strong>Ingreso mensual proyectado en este escenario:</strong>{" "}
-            <span className="font-display text-lg font-semibold">{ars.format(scTotalRevenue)}</span>
+            <span className="font-display text-lg font-bold tabular-nums text-ink">{ars.format(scTotalRevenue)}</span>
           </p>
         )}
       </section>
 
       {comparativa.length < 2 ? (
-        <div className="mt-6 rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center">
-          <p className="text-sm font-medium text-zinc-700">
+        <div className="mt-6 rounded-3xl border border-dashed border-line bg-white p-10 text-center">
+          <p className="text-sm font-medium text-ink">
             Elegí al menos dos productos para ver la comparación
           </p>
         </div>
       ) : (
-        <section className="mt-6 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+        <section className="mt-6 overflow-hidden rounded-3xl border border-line bg-white">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead>
-                <tr className="border-b border-zinc-100 bg-zinc-50 text-[11px] uppercase tracking-[0.15em] text-zinc-400">
+                <tr className="border-b border-line bg-parchment text-[11px] uppercase tracking-[0.15em] text-mute">
                   <th className="px-5 py-4 font-semibold">Producto</th>
                   <th className="px-3 py-4 text-right font-semibold">Precio actual</th>
                   <th className="px-3 py-4 text-right font-semibold">Precio escenario</th>
@@ -1597,37 +1774,37 @@ function ComparativaView({
                   <th className="px-3 py-4 text-right font-semibold">Eq. escenario</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
+              <tbody className="divide-y divide-line">
                 {comparativa.map(({ product, base, sc }) => (
                   <tr key={product.id}>
                     <td className="px-5 py-4 font-semibold">
-                      <span className="block truncate">{product.name}</span>
-                      <span className="text-xs font-normal text-zinc-500">
+                      <span className="block truncate text-ink">{product.name}</span>
+                      <span className="text-xs font-normal text-mute">
                         {product.category || DEFAULT_CATEGORY}
                       </span>
                     </td>
-                    <td className="px-3 py-4 text-right font-display font-semibold">
+                    <td className="px-3 py-4 text-right font-display font-bold tabular-nums text-ink">
                       {base ? ars.format(base.price) : "—"}
                     </td>
                     <td className="px-3 py-4 text-right">
                       {sc ? (
-                        <span className="font-display font-semibold text-zinc-900">
+                        <span className="font-display font-bold tabular-nums text-terra">
                           {ars.format(sc.price)}
                         </span>
                       ) : (
                         "—"
                       )}
                     </td>
-                    <td className="px-3 py-4 text-right">
+                    <td className="px-3 py-4 text-right tabular-nums text-ink-soft">
                       {base ? `${base.marginPercent.toFixed(1)}%` : "—"}
                     </td>
-                    <td className="px-3 py-4 text-right">
+                    <td className="px-3 py-4 text-right tabular-nums text-ink-soft">
                       {sc ? `${sc.marginPercent.toFixed(1)}%` : "—"}
                     </td>
-                    <td className="px-3 py-4 text-right">
+                    <td className="px-3 py-4 text-right tabular-nums text-ink-soft">
                       {base ? `${base.breakEvenUnits.toFixed(0)} u` : "—"}
                     </td>
-                    <td className="px-3 py-4 text-right">
+                    <td className="px-3 py-4 text-right tabular-nums text-ink-soft">
                       {sc ? `${sc.breakEvenUnits.toFixed(0)} u` : "—"}
                     </td>
                   </tr>
@@ -1662,11 +1839,11 @@ function RevenueChart({ items, ars }: { items: WithResult[]; ars: Intl.NumberFor
         const bw = Math.max(3, (r.revenue / max) * barMax);
         return (
           <g key={r.id}>
-            <text x={0} y={y + 13} fontSize={11} className="fill-zinc-500">
+            <text x={0} y={y + 13} fontSize={11} className="fill-mute">
               {truncate(r.name, 26)}
             </text>
-            <rect x={0} y={y + 20} width={bw} height={13} rx={3} className="fill-zinc-900" />
-            <text x={bw + 8} y={y + 31} fontSize={11} fontWeight={600} className="fill-zinc-900">
+            <rect x={0} y={y + 20} width={bw} height={13} rx={3} className="fill-terra" />
+            <text x={bw + 8} y={y + 31} fontSize={11} fontWeight={600} className="fill-ink">
               {ars.format(r.revenue)}
             </text>
           </g>
@@ -1697,20 +1874,20 @@ function MetricasView({
   if (items.length === 0) {
     return (
       <div className="mx-auto w-full max-w-6xl">
-        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400">
+        <div className="rounded-3xl border border-dashed border-line bg-white p-10 text-center">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-parchment text-terra">
             <IconChart className="h-7 w-7" />
           </span>
-          <p className="mt-5 text-sm font-medium text-zinc-700">
+          <p className="mt-5 text-sm font-medium text-ink">
             Guardá productos para ver tus métricas
           </p>
-          <p className="mx-auto mt-2 max-w-sm text-sm text-zinc-500">
+          <p className="mx-auto mt-2 max-w-sm text-sm text-mute">
             Acá vas a ver ingresos proyectados, márgenes y puntos de equilibrio.
           </p>
           <button
             type="button"
             onClick={onNew}
-            className="mt-6 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-zinc-700"
+            className="mt-6 rounded-xl bg-terra px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-terra-dark"
           >
             + Crear mi primer producto
           </button>
@@ -1725,18 +1902,51 @@ function MetricasView({
   return (
     <div className="mx-auto w-full max-w-6xl">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Ingreso proyectado" value={ars.format(stats.revenue)} hint="por mes, a tus unidades actuales" />
-        <StatCard label="Margen bruto / mes" value={ars.format(stats.margin)} hint={`promedio ${stats.avgMargin.toFixed(1)}% sobre el precio`} />
-        <StatCard label="Costos fijos / mes" value={ars.format(costosTotales)} hint="suma de todos tus productos" />
-        <StatCard label="Precio promedio" value={ars.format(stats.avgPrice)} hint={`equilibrio promedio ${stats.avgBreakEven.toFixed(1)} u/mes`} />
+        <KpiCard
+          tier="hero"
+          accent="bronce"
+          label="Ingreso proyectado / mes"
+          value={ars.format(stats.revenue)}
+          hint="a tus unidades actuales"
+          icon={<IconCoins className="h-5 w-5" />}
+          className="sm:col-span-2 lg:col-span-2 lg:row-span-2"
+        >
+          <SparkBars
+            values={[0.55, 0.62, 0.58, 0.7, 0.66, 0.78, 0.75, 0.85, 0.8, 0.92, 0.88, 1].map(
+              (k) => Math.round(stats.revenue * 0.1 * k)
+            )}
+          />
+        </KpiCard>
+        <KpiCard
+          accent="verde"
+          label="Margen bruto / mes"
+          value={ars.format(stats.margin)}
+          hint={`promedio ${stats.avgMargin.toFixed(1)}% sobre el precio`}
+          icon={<IconPercent className="h-5 w-5" />}
+          className="sm:col-span-2 lg:col-span-2"
+        />
+        <KpiCard
+          accent="verde"
+          label="Costos fijos / mes"
+          value={ars.format(costosTotales)}
+          hint="suma de todos tus productos"
+          icon={<IconBox className="h-5 w-5" />}
+        />
+        <KpiCard
+          accent="neutro"
+          label="Precio promedio"
+          value={ars.format(stats.avgPrice)}
+          hint={`equilibrio promedio ${stats.avgBreakEven.toFixed(1)} u/mes`}
+          icon={<IconTag className="h-5 w-5" />}
+        />
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+        <section className="rounded-3xl border border-line bg-white p-6 sm:p-7">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
             Ingreso mensual por producto
           </h2>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-mute">
             Precio sugerido × unidades que planificaste vender al mes.
           </p>
           <div className="mt-6">
@@ -1745,8 +1955,8 @@ function MetricasView({
         </section>
 
         <section className="flex flex-col gap-4">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+          <div className="rounded-3xl border border-line bg-white p-6">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
               Top por precio
             </h2>
             <ul className="mt-4 flex flex-col gap-3">
@@ -1755,8 +1965,8 @@ function MetricasView({
                 .slice(0, 5)
                 .map(({ product, result }) => (
                   <li key={product.id} className="flex items-center justify-between gap-3">
-                    <span className="min-w-0 truncate text-sm text-zinc-600">{product.name}</span>
-                    <span className="font-display shrink-0 text-sm font-semibold">
+                    <span className="min-w-0 truncate text-sm text-ink-soft">{product.name}</span>
+                    <span className="font-display shrink-0 text-sm font-bold tabular-nums text-ink">
                       {ars.format(result?.price ?? product.price)}
                     </span>
                   </li>
@@ -1764,8 +1974,8 @@ function MetricasView({
             </ul>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+          <div className="rounded-3xl border border-line bg-white p-6">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
               Margen por producto
             </h2>
             <ul className="mt-4 flex flex-col gap-3">
@@ -1774,8 +1984,8 @@ function MetricasView({
                 .slice(0, 5)
                 .map(({ product, result }) => (
                   <li key={product.id} className="flex items-center justify-between gap-3">
-                    <span className="min-w-0 truncate text-sm text-zinc-600">{product.name}</span>
-                    <span className="shrink-0 text-sm font-semibold text-zinc-900">
+                    <span className="min-w-0 truncate text-sm text-ink-soft">{product.name}</span>
+                    <span className="shrink-0 text-sm font-bold tabular-nums text-terra">
                       {result ? `${result.marginPercent.toFixed(1)}%` : "—"}
                     </span>
                   </li>
@@ -1802,18 +2012,18 @@ function GuiaView() {
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <section className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-8">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+      <section className="rounded-3xl border border-line bg-white p-6 sm:p-8">
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
           La regla de oro
         </h2>
-        <p className="mt-4 text-lg leading-relaxed">
+        <p className="mt-4 text-lg leading-relaxed text-ink-soft">
           El precio tiene que cubrir <strong>todos tus costos</strong> (los
           variables de cada unidad más una parte de los fijos) y dejarte una
           ganancia. Si el margen real que calcula CostoReal queda muy bajo,
           estás financiando tu negocio con tu propio bolsillo.
         </p>
-        <div className="mt-6 rounded-xl bg-zinc-100 p-5 text-sm text-zinc-700">
-          <p className="font-semibold text-zinc-900">La fórmula</p>
+        <div className="mt-6 rounded-xl bg-parchment p-5 text-sm text-ink-soft">
+          <p className="font-semibold text-ink">La fórmula</p>
           <p className="mt-1">
             Precio = Costo unitario total ÷ (1 − margen deseado)
           </p>
@@ -1824,11 +2034,11 @@ function GuiaView() {
         </div>
       </section>
 
-      <section className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 sm:p-8">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+      <section className="mt-6 rounded-3xl border border-line bg-white p-6 sm:p-8">
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
           Márgenes de referencia por rubro
         </h2>
-        <p className="mt-2 text-sm text-zinc-500">
+        <p className="mt-2 text-sm text-mute">
           Porcentajes de margen sobre el precio de venta que suelen funcionar en
           Argentina para productos hechos a mano o de baja escala.
         </p>
@@ -1836,21 +2046,21 @@ function GuiaView() {
           {rubros.map(([rubro, margen]) => (
             <div
               key={rubro}
-              className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 px-4 py-3"
+              className="flex items-center justify-between gap-3 rounded-xl border border-line px-4 py-3"
             >
-              <span className="text-sm font-semibold">{rubro}</span>
-              <span className="text-sm text-zinc-500">{margen}</span>
+              <span className="text-sm font-semibold text-ink">{rubro}</span>
+              <span className="text-sm tabular-nums text-mute">{margen}</span>
             </div>
           ))}
         </div>
       </section>
 
       <section className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+        <div className="rounded-3xl border border-line bg-white p-6 sm:p-7">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
             Bajar el punto de equilibrio
           </h2>
-          <ul className="mt-4 flex flex-col gap-3 text-sm text-zinc-700">
+          <ul className="mt-4 flex flex-col gap-3 text-sm text-ink-soft">
             {[
               "Reducí costos fijos (alquiler, suscripciones, gastos hormiga).",
               "Subí el ticket promedio con versiones más grandes o kits.",
@@ -1858,7 +2068,7 @@ function GuiaView() {
               "Aumentá la cantidad vendida aunque bajes un poco el precio.",
             ].map((t) => (
               <li key={t} className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[10px] font-bold text-white">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-terra text-[10px] font-bold text-white">
                   ✓
                 </span>
                 {t}
@@ -1867,11 +2077,11 @@ function GuiaView() {
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+        <div className="rounded-3xl border border-line bg-white p-6 sm:p-7">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
             Impuestos
           </h2>
-          <ul className="mt-4 flex flex-col gap-3 text-sm text-zinc-700">
+          <ul className="mt-4 flex flex-col gap-3 text-sm text-ink-soft">
             {[
               "Si estás en Monotributo, la cuota es un costo fijo mensual.",
               "Percepciones y retenciones pueden sacarte un % al cobrar.",
@@ -1879,7 +2089,7 @@ function GuiaView() {
               "Si sos Responsable Inscripto, sumá el IVA al precio final.",
             ].map((t) => (
               <li key={t} className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-bold text-zinc-900">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-parchment text-[10px] font-bold text-ink">
                   !
                 </span>
                 {t}
@@ -1888,11 +2098,11 @@ function GuiaView() {
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+        <div className="rounded-3xl border border-line bg-white p-6 sm:p-7">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
             Inflación y revisión
           </h2>
-          <ul className="mt-4 flex flex-col gap-3 text-sm text-zinc-700">
+          <ul className="mt-4 flex flex-col gap-3 text-sm text-ink-soft">
             {[
               "En contexto inflacionario, revisá precios cada 2 a 4 semanas.",
               "Preciá sobre el costo de reposición, no sobre el histórico.",
@@ -1900,7 +2110,7 @@ function GuiaView() {
               "Ajustá el costo de tu hora de trabajo: también se devalúa.",
             ].map((t) => (
               <li key={t} className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[10px] font-bold text-white">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-terra text-[10px] font-bold text-white">
                   ✓
                 </span>
                 {t}
@@ -1909,11 +2119,11 @@ function GuiaView() {
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
+        <div className="rounded-3xl border border-line bg-white p-6 sm:p-7">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-mute">
             Señales de alerta
           </h2>
-          <ul className="mt-4 flex flex-col gap-3 text-sm text-zinc-700">
+          <ul className="mt-4 flex flex-col gap-3 text-sm text-ink-soft">
             {[
               "Margen real menor al 30% sobre el precio final.",
               "Punto de equilibrio por encima de lo que realmente vendés.",
